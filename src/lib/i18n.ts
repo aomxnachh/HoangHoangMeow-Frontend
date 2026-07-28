@@ -2,7 +2,7 @@ export const i18n = {
   dashboard: {
     title: 'แดชบอร์ด',
     subtitle: 'ภาพรวมการดูแลสัตว์เลี้ยงของคุณ',
-    greeting: (name: string) => `สวัสดี, ${name}! 👋`,
+    greeting: (name: string) => `สวัสดี, ${name}!`,
     petsCount: (count: number) => `สัตว์เลี้ยงของคุณทั้ง ${count} ตัวอยู่ภายใต้การดูแลที่ดี`,
     stats: {
       totalPets: 'สัตว์เลี้ยงทั้งหมด',

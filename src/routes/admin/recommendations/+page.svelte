@@ -94,12 +94,12 @@
 
 <TopNav title="จัดการคำแนะนำ" subtitle="เพิ่ม ลบ แก้ไข คำแนะนำในการดูแลสัตว์เลี้ยง" />
 
-<div class="p-6 space-y-6">
+<div class="p-6 space-y-6 animate-fade-in stagger-1">
 	<div class="flex items-center justify-between">
 		<h2 class="text-lg font-bold text-gray-800">รายการคำแนะนำ</h2>
 		<button
 			onclick={openAddModal}
-			class="rounded-xl bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 transition-colors"
+			class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group"
 		>
 			+ เพิ่มคำแนะนำ
 		</button>
@@ -107,7 +107,7 @@
 
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
 
-	<div class="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+	<div class="rounded-3xl glass-heavy border border-white/60 overflow-hidden shadow-xl animate-fade-up">
 		{#if loading}
 			<p class="py-12 text-center text-sm text-gray-500">กำลังโหลด...</p>
 		{:else if recommendations.length === 0}
@@ -132,7 +132,7 @@
 								<td class="px-4 py-3">{rec.ageRange}</td>
 								<td class="px-4 py-3 max-w-[300px] truncate">{rec.content}</td>
 								<td class="px-4 py-3 text-right space-x-2">
-									<button onclick={() => openEditModal(rec)} class="text-indigo-600 hover:text-indigo-900">แก้ไข</button>
+									<button onclick={() => openEditModal(rec)} class="text-brand-600 hover:text-brand-900">แก้ไข</button>
 									<button onclick={() => deleteRecommendation(rec.id)} class="text-red-600 hover:text-red-900">ลบ</button>
 								</td>
 							</tr>
@@ -148,21 +148,21 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+		class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md"
 		onclick={(e) => { if (e.target === e.currentTarget) showModal = false; }}
 	>
-		<div class="mx-4 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+		<div class="mx-4 w-full max-w-lg rounded-3xl glass-heavy p-8 shadow-2xl">
 			<h2 class="text-lg font-bold text-gray-800 mb-6">{editingId ? 'แก้ไขคำแนะนำ' : 'เพิ่มคำแนะนำ'}</h2>
 
 			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); saveRecommendation(); }}>
 				<div class="grid grid-cols-2 gap-4">
 					<div>
 						<label class="mb-1 block text-sm font-medium text-gray-700">หมวดหมู่สัตว์เลี้ยง (ID) *</label>
-						<input type="number" required bind:value={formData.petCategoryId} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100" />
+						<input type="number" required bind:value={formData.petCategoryId} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
 					</div>
 					<div>
 						<label class="mb-1 block text-sm font-medium text-gray-700">ช่วงอายุ *</label>
-						<select bind:value={formData.ageRange} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100">
+						<select bind:value={formData.ageRange} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
 							<option value="ALL">ทุกช่วงวัย</option>
 							<option value="BABY">วัยเด็ก</option>
 							<option value="ADULT">วัยโต</option>
@@ -173,12 +173,12 @@
 				
 				<div>
 					<label class="mb-1 block text-sm font-medium text-gray-700">เนื้อหา *</label>
-					<textarea required bind:value={formData.content} rows="4" class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"></textarea>
+					<textarea required bind:value={formData.content} rows="4" class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"></textarea>
 				</div>
 
 				<div class="flex justify-end gap-3 pt-4">
-					<button type="button" onclick={() => showModal = false} class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">ยกเลิก</button>
-					<button type="submit" disabled={saving} class="rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-60">{saving ? 'กำลังบันทึก...' : 'บันทึก'}</button>
+					<button type="button" onclick={() => showModal = false} class="rounded-2xl border-2 border-transparent bg-white/60 px-6 py-3 text-sm font-bold text-gray-700 hover:bg-white transition-all">ยกเลิก</button>
+					<button type="submit" disabled={saving} class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group disabled:opacity-60 disabled:hover:translate-y-0">{saving ? 'กำลังบันทึก...' : 'บันทึก'}</button>
 				</div>
 			</form>
 		</div>

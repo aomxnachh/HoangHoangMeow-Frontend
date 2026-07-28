@@ -99,14 +99,14 @@
 
 <TopNav title="การแจ้งเตือน" subtitle="จัดการนัดหมายและกิจวัตรของสัตว์เลี้ยง" />
 
-<div class="space-y-6 p-6">
+<div class="space-y-6 p-6 animate-fade-in stagger-1">
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
 	<div class="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
 		<div class="flex rounded-xl border border-gray-200 bg-gray-50 p-1">
 			<button
 				onclick={() => (activeTab = 'list')}
 				class="rounded-lg px-4 py-2 text-sm font-semibold transition-colors {activeTab === 'list'
-					? 'bg-rose-500 text-white shadow-sm'
+					? 'bg-brand-500 text-white shadow-sm'
 					: 'text-gray-600 hover:text-gray-900'}"
 			>
 				รายการแจ้งเตือน
@@ -114,7 +114,7 @@
 			<button
 				onclick={() => (activeTab = 'create')}
 				class="rounded-lg px-4 py-2 text-sm font-semibold transition-colors {activeTab === 'create'
-					? 'bg-rose-500 text-white shadow-sm'
+					? 'bg-brand-500 text-white shadow-sm'
 					: 'text-gray-600 hover:text-gray-900'}"
 			>
 				สร้างการแจ้งเตือน
@@ -123,7 +123,7 @@
 
 		<button
 			onclick={() => (activeTab = 'create')}
-			class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-600"
+			class="inline-flex items-center justify-center gap-2 relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group"
 		>
 			<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -134,26 +134,26 @@
 
 	{#if activeTab === 'list'}
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-			<div class="rounded-2xl border border-gray-200 bg-white p-5">
+			<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up p-5">
 				<p class="text-sm text-gray-500">ทั้งหมด</p>
 				<p class="mt-1 text-2xl font-bold text-gray-800">{reminders.length} รายการ</p>
 			</div>
-			<div class="rounded-2xl border border-gray-200 bg-white p-5">
+			<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up p-5">
 				<p class="text-sm text-gray-500">กำลังใช้งาน</p>
 				<p class="mt-1 text-2xl font-bold text-emerald-600">
 					{reminders.filter((r) => r.status === 'active').length} รายการ
 				</p>
 			</div>
-			<div class="rounded-2xl border border-gray-200 bg-white p-5">
+			<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up p-5">
 				<p class="text-sm text-gray-500">วันนี้</p>
-				<p class="mt-1 text-2xl font-bold text-rose-500">{todayCount} รายการ</p>
+				<p class="mt-1 text-2xl font-bold text-brand-500">{todayCount} รายการ</p>
 			</div>
 		</div>
 
 		<div class="flex flex-wrap gap-3">
 			<select
 				bind:value={filterPet}
-				class="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+				class="w-full max-w-[200px] rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 			>
 				{#each petNames as name}
 					<option value={name}>🐾 {name}</option>
@@ -161,7 +161,7 @@
 			</select>
 			<select
 				bind:value={filterStatus}
-				class="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+				class="w-full max-w-[200px] rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 			>
 				{#each statusOptions as status}
 					<option value={status}>{status === 'ทั้งหมด' ? status : statusLabel(status)}</option>
@@ -169,7 +169,7 @@
 			</select>
 		</div>
 
-		<div class="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+		<div class="overflow-hidden rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up">
 			<div class="overflow-x-auto">
 				<table class="w-full">
 					<thead>
@@ -185,7 +185,7 @@
 					<tbody>
 						{#each filteredReminders as reminder}
 							{@const pet = pets.find((p) => p.id === reminder.petId)}
-							<tr class="border-b border-gray-100 transition-colors hover:bg-rose-50/40">
+							<tr class="border-b border-gray-100 transition-colors hover:bg-brand-50/40">
 								<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
 									<div class="font-medium text-gray-800">{reminder.date}</div>
 									<div class="text-xs text-gray-400">{reminder.time}</div>
@@ -194,7 +194,7 @@
 									<div class="text-sm font-semibold text-gray-800">{reminder.title}</div>
 									<div class="mt-1 max-w-md truncate text-xs text-gray-500">{reminder.description}</div>
 									{#if reminder.productUrl}
-										<a href={reminder.productUrl} target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex items-center gap-1 text-xs text-rose-500 hover:text-rose-600">
+										<a href={reminder.productUrl} target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex items-center gap-1 text-xs text-brand-500 hover:text-brand-600">
 											<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
 											ลิงก์สินค้า
 										</a>
@@ -238,12 +238,12 @@
 			</div>
 		</div>
 	{:else}
-		<div class="rounded-2xl border border-gray-200 bg-white p-6">
+		<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up p-6">
 			<h2 class="text-lg font-bold text-gray-800">สร้างการแจ้งเตือน</h2>
 			<form class="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2" onsubmit={(e) => { e.preventDefault(); createReminder(); }}>
 				<div>
 					<label for="reminder-pet" class="mb-1.5 block text-sm font-medium text-gray-700">เลือกสัตว์เลี้ยง</label>
-					<select id="reminder-pet" bind:value={selectedPet} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100">
+					<select id="reminder-pet" bind:value={selectedPet} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
 						{#each pets as pet}
 							<option value={pet.id}>{pet.name} ({pet.species})</option>
 						{/each}
@@ -251,7 +251,7 @@
 				</div>
 				<div>
 					<label for="reminder-type" class="mb-1.5 block text-sm font-medium text-gray-700">ประเภทการแจ้งเตือน</label>
-					<select id="reminder-type" bind:value={selectedType} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100">
+					<select id="reminder-type" bind:value={selectedType} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
 						{#each reminderTypes as type}
 							<option>{type}</option>
 						{/each}
@@ -259,19 +259,19 @@
 				</div>
 				<div class="lg:col-span-2">
 					<label for="reminder-title" class="mb-1.5 block text-sm font-medium text-gray-700">หัวข้อ</label>
-					<input id="reminder-title" required bind:value={title} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100" placeholder="เช่น ฉีดวัคซีนประจำปี" />
+					<input id="reminder-title" required bind:value={title} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" placeholder="เช่น ฉีดวัคซีนประจำปี" />
 				</div>
 				<div>
 					<label for="reminder-date" class="mb-1.5 block text-sm font-medium text-gray-700">วันที่</label>
-					<input id="reminder-date" required type="date" bind:value={date} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100" />
+					<input id="reminder-date" required type="date" bind:value={date} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
 				</div>
 				<div>
 					<label for="reminder-time" class="mb-1.5 block text-sm font-medium text-gray-700">เวลา</label>
-					<input id="reminder-time" required type="time" bind:value={time} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100" />
+					<input id="reminder-time" required type="time" bind:value={time} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
 				</div>
 				<div>
 					<label for="reminder-repeat" class="mb-1.5 block text-sm font-medium text-gray-700">ทำซ้ำ</label>
-					<select id="reminder-repeat" bind:value={repeat} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100">
+					<select id="reminder-repeat" bind:value={repeat} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
 						<option>ไม่ซ้ำ</option>
 						<option>ทุกวัน</option>
 						<option>รายสัปดาห์</option>
@@ -281,7 +281,7 @@
 				</div>
 				<div>
 					<label for="reminder-notice" class="mb-1.5 block text-sm font-medium text-gray-700">แจ้งเตือนล่วงหน้า</label>
-					<select id="reminder-notice" bind:value={notice} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100">
+					<select id="reminder-notice" bind:value={notice} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
 						<option value="0">ตรงเวลา</option>
 						<option value="15">15 นาที</option>
 						<option value="60">1 ชั่วโมง</option>
@@ -290,13 +290,13 @@
 				</div>
 				<div class="lg:col-span-2">
 					<label for="reminder-productUrl" class="mb-1.5 block text-sm font-medium text-gray-700">ลิงก์สินค้า (ถ้ามี)</label>
-					<input id="reminder-productUrl" bind:value={productUrl} type="url" class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100" placeholder="https://..." />
+					<input id="reminder-productUrl" bind:value={productUrl} type="url" class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" placeholder="https://..." />
 				</div>
 				<div class="flex justify-end gap-3 lg:col-span-2">
 					<button type="button" onclick={() => (activeTab = 'list')} class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
 						ยกเลิก
 					</button>
-					<button type="submit" class="rounded-xl bg-rose-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-rose-600">
+					<button type="submit" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group">
 						บันทึก
 					</button>
 				</div>
@@ -306,23 +306,23 @@
 </div>
 
 {#if showSnoozeModal}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-		<div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4">
+		<div class="w-full max-w-sm rounded-3xl glass-heavy p-8 shadow-xl">
 			<h2 class="text-xl font-bold text-gray-800 mb-4">เลื่อนการแจ้งเตือน</h2>
 			<form onsubmit={(e) => { e.preventDefault(); confirmSnooze(); }} class="space-y-4">
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="snoozeDate">วันที่</label>
-					<input type="date" id="snoozeDate" bind:value={snoozeDate} required class="w-full rounded-xl border border-gray-200 px-4 py-2 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100" />
+					<input type="date" id="snoozeDate" bind:value={snoozeDate} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="snoozeTime">เวลา</label>
-					<input type="time" id="snoozeTime" bind:value={snoozeTime} required class="w-full rounded-xl border border-gray-200 px-4 py-2 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100" />
+					<input type="time" id="snoozeTime" bind:value={snoozeTime} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
 				</div>
 				<div class="mt-6 flex justify-end gap-3">
 					<button type="button" onclick={() => showSnoozeModal = false} class="rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
 						ยกเลิก
 					</button>
-					<button type="submit" class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors">
+					<button type="submit" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group">
 						ยืนยันเลื่อน
 					</button>
 				</div>

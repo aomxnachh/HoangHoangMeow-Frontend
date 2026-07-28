@@ -8,10 +8,11 @@
 		label: string;
 		value: string | number;
 		icon: string;
-		color?: 'indigo' | 'green' | 'amber' | 'rose' | 'blue' | 'purple';
+		color?: 'indigo' | 'brand' | 'green' | 'amber' | 'rose' | 'blue' | 'purple';
 	} = $props();
 
 	const colorClasses: Record<string, { bg: string; icon: string; text: string }> = {
+		brand: { bg: 'bg-brand-50', icon: 'text-brand-600', text: 'text-brand-700' },
 		indigo: { bg: 'bg-indigo-50', icon: 'text-indigo-600', text: 'text-indigo-600' },
 		green: { bg: 'bg-green-50', icon: 'text-green-600', text: 'text-green-600' },
 		amber: { bg: 'bg-amber-50', icon: 'text-amber-600', text: 'text-amber-600' },
@@ -20,11 +21,14 @@
 		purple: { bg: 'bg-purple-50', icon: 'text-purple-600', text: 'text-purple-600' }
 	};
 
-	let c = $derived(colorClasses[color] || colorClasses.indigo);
+	let c = $derived(colorClasses[color] || colorClasses.brand);
 </script>
 
-<div class="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md">
-	<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl {c.bg}">
+<div class="group relative flex items-center gap-4 rounded-2xl glass-card p-5 overflow-hidden hover:-translate-y-1">
+	<!-- Decorative background blob -->
+	<div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br from-white to-transparent opacity-50 blur-2xl transition-transform duration-500 group-hover:scale-150"></div>
+	
+	<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl {c.bg} shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 relative z-10">
 		{#if icon === 'paw'}
 			<svg class="h-6 w-6 {c.icon}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V2.75a.75.75 0 01.75-.75 2.25 2.25 0 012.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282m0 0h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 10.203 4.167 9.75 5 9.75h1.053c.472 0 .745.556.5.96a8.958 8.958 0 00-1.302 4.665c0 1.194.232 2.333.654 3.375z" />
@@ -56,8 +60,8 @@
 		{/if}
 	</div>
 
-	<div>
-		<p class="text-sm text-gray-500">{label}</p>
-		<p class="text-2xl font-bold {c.text}">{value}</p>
+	<div class="relative z-10">
+		<p class="text-sm text-gray-500 font-medium">{label}</p>
+		<p class="text-2xl font-bold {c.text} mt-0.5">{value}</p>
 	</div>
 </div>

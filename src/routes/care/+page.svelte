@@ -100,7 +100,7 @@
 
 <TopNav title={i18n.care.title} subtitle={i18n.care.subtitle} />
 
-<div class="p-6 space-y-6">
+<div class="p-6 space-y-6 animate-fade-in stagger-1">
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
 	<!-- Tabs -->
 	<div class="flex items-center gap-4">
@@ -108,7 +108,7 @@
 			<button
 				onclick={() => (activeTab = 'plans')}
 				class="rounded-lg px-4 py-2 text-sm font-medium transition-colors {activeTab === 'plans'
-					? 'bg-indigo-600 text-white shadow-sm'
+					? 'bg-brand-600 text-white shadow-sm'
 					: 'text-gray-600 hover:text-gray-800'}"
 			>
 				📋 แผนดูแล ({carePlans.length})
@@ -116,7 +116,7 @@
 			<button
 				onclick={() => (activeTab = 'recommendations')}
 				class="rounded-lg px-4 py-2 text-sm font-medium transition-colors {activeTab === 'recommendations'
-					? 'bg-indigo-600 text-white shadow-sm'
+					? 'bg-brand-600 text-white shadow-sm'
 					: 'text-gray-600 hover:text-gray-800'}"
 			>
 				💡 คำแนะนำ ({careRecommendations.length})
@@ -125,7 +125,7 @@
 
 		<select
 			bind:value={filterPet}
-			class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+			class="w-full max-w-[200px] rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 		>
 			{#each petNames as name}
 				<option value={name}>🐾 {name}</option>
@@ -133,7 +133,7 @@
 		</select>
 
 		{#if activeTab === 'plans'}
-			<button onclick={openAddModal} class="ml-auto rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 transition-colors">
+			<button onclick={openAddModal} class="ml-auto relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group">
 				+ สร้างแผนดูแล
 			</button>
 		{/if}
@@ -144,7 +144,7 @@
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 			{#each filteredPlans as plan}
 				{@const pet = pets.find(p => p.id === plan.petId)}
-				<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md">
+				<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up p-5">
 					<div class="flex items-start justify-between">
 						<div class="flex items-center gap-2">
 							<span class="text-2xl">{pet?.image}</span>
@@ -172,7 +172,7 @@
 					<ul class="mt-4 space-y-2">
 						{#each plan.items as item}
 							<li class="flex items-center gap-2 text-sm text-gray-600">
-								<svg class="h-4 w-4 shrink-0 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+								<svg class="h-4 w-4 shrink-0 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 									<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 								</svg>
 								{item}
@@ -181,7 +181,7 @@
 					</ul>
 
 					<div class="mt-4 flex gap-2">
-						<button onclick={() => handleDone(plan.id)} class="flex-1 rounded-lg bg-indigo-50 py-2 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-100">
+						<button onclick={() => handleDone(plan.id)} class="flex-1 rounded-lg bg-brand-50 py-2 text-xs font-medium text-brand-700 transition-colors hover:bg-brand-100">
 							ดำเนินการ
 						</button>
 						<button onclick={() => openEditModal(plan)} class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-50">
@@ -200,7 +200,7 @@
 		<div class="space-y-4">
 			{#each filteredRecommendations as rec}
 				{@const pet = pets.find(p => p.id === rec.petId)}
-				<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md">
+				<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up p-5">
 					<div class="flex items-start gap-4">
 						<!-- Priority indicator -->
 						<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {rec.priority === 'high' ? 'bg-red-100' : rec.priority === 'medium' ? 'bg-amber-100' : 'bg-blue-100'}">
@@ -228,7 +228,7 @@
 							</div>
 						</div>
 
-						<button class="shrink-0 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-100">
+						<button class="shrink-0 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-medium text-brand-700 transition-colors hover:bg-brand-100">
 							นำไปใช้
 						</button>
 					</div>
@@ -239,13 +239,13 @@
 </div>
 
 {#if showModal}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-		<div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4">
+		<div class="w-full max-w-md rounded-3xl glass-heavy p-8 shadow-xl">
 			<h2 class="text-xl font-bold text-gray-800 mb-4">{isEditing ? 'แก้ไขแผนดูแล' : 'สร้างแผนดูแล'}</h2>
 			<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-4">
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="petId">สัตว์เลี้ยง</label>
-					<select id="petId" bind:value={formData.petId} required class="w-full rounded-xl border border-gray-200 px-4 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+					<select id="petId" bind:value={formData.petId} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
 						{#each pets as pet}
 							<option value={pet.id}>{pet.name}</option>
 						{/each}
@@ -253,15 +253,15 @@
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="title">หัวข้อ</label>
-					<input type="text" id="title" bind:value={formData.title} required class="w-full rounded-xl border border-gray-200 px-4 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+					<input type="text" id="title" bind:value={formData.title} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="detail">รายละเอียด (แต่ละบรรทัดคือ 1 รายการ)</label>
-					<textarea id="detail" bind:value={formData.detail} rows="3" class="w-full rounded-xl border border-gray-200 px-4 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"></textarea>
+					<textarea id="detail" bind:value={formData.detail} rows="3" class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"></textarea>
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="frequency">ความถี่</label>
-					<select id="frequency" bind:value={formData.frequencyDays} required class="w-full rounded-xl border border-gray-200 px-4 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+					<select id="frequency" bind:value={formData.frequencyDays} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
 						{#each frequencies as freq}
 							<option value={freq.value}>{freq.label}</option>
 						{/each}
@@ -269,13 +269,13 @@
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="nextDueAt">วันที่ครบกำหนดครั้งถัดไป</label>
-					<input type="date" id="nextDueAt" bind:value={formData.nextDueAt} required class="w-full rounded-xl border border-gray-200 px-4 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+					<input type="date" id="nextDueAt" bind:value={formData.nextDueAt} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
 				</div>
 				<div class="mt-6 flex justify-end gap-3">
 					<button type="button" onclick={() => showModal = false} class="rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
 						ยกเลิก
 					</button>
-					<button type="submit" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 transition-colors">
+					<button type="submit" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group">
 						บันทึก
 					</button>
 				</div>

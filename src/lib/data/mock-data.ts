@@ -1,7 +1,3 @@
-// ============================================
-// Mock Data for Pet Management Application
-// ============================================
-
 export interface Pet {
 	id: string;
 	name: string;
@@ -67,9 +63,6 @@ export interface Reminder {
 	status: 'active' | 'completed' | 'snoozed';
 }
 
-// ============================================
-// Pets
-// ============================================
 export const pets: Pet[] = [
 	{
 		id: '1',
@@ -133,9 +126,6 @@ export const pets: Pet[] = [
 	}
 ];
 
-// ============================================
-// Health Records
-// ============================================
 export const healthRecords: HealthRecord[] = [
 	{
 		id: 'hr1',
@@ -202,9 +192,6 @@ export const healthRecords: HealthRecord[] = [
 	}
 ];
 
-// ============================================
-// Expenses
-// ============================================
 export const expenses: Expense[] = [
 	{ id: 'ex1', petId: '1', category: 'อาหาร', description: 'อาหารเม็ดแมว Royal Canin', date: '2026-07-10', amount: 890 },
 	{ id: 'ex2', petId: '2', category: 'อาหาร', description: 'อาหารหมาออริเจน 15kg', date: '2026-07-08', amount: 2500 },
@@ -220,9 +207,6 @@ export const expenses: Expense[] = [
 	{ id: 'ex12', petId: '2', category: 'อาหาร', description: 'ขนมรางวัลหมา', date: '2026-07-11', amount: 180 }
 ];
 
-// ============================================
-// Expense Summary (for dashboard)
-// ============================================
 export const expenseSummary = {
 	totalThisMonth: 7920,
 	averagePerMonth: 8500,
@@ -244,9 +228,6 @@ export const expenseSummary = {
 	]
 };
 
-// ============================================
-// Care Plans
-// ============================================
 export const carePlans: CarePlanItem[] = [
 	{
 		id: 'cp1',
@@ -295,9 +276,6 @@ export const carePlans: CarePlanItem[] = [
 	}
 ];
 
-// ============================================
-// Care Recommendations
-// ============================================
 export const careRecommendations: CareRecommendation[] = [
 	{
 		id: 'rec1',
@@ -346,9 +324,6 @@ export const careRecommendations: CareRecommendation[] = [
 	}
 ];
 
-// ============================================
-// Reminders
-// ============================================
 export const reminders: Reminder[] = [
 	{
 		id: 'rem1',
@@ -424,9 +399,6 @@ export const reminders: Reminder[] = [
 	}
 ];
 
-// ============================================
-// Dashboard Stats
-// ============================================
 export const dashboardStats = {
 	totalPets: 5,
 	upcomingVaccinations: 3,
@@ -434,9 +406,6 @@ export const dashboardStats = {
 	activeReminders: 6
 };
 
-// ============================================
-// Upcoming Events (for dashboard)
-// ============================================
 export const upcomingEvents = [
 	{ id: 'ev1', petName: 'โมจิ', type: 'วัคซีน', title: 'ฉีดวัคซีน Booster', date: '15 ธ.ค. 2569', color: 'bg-blue-100 text-blue-700' },
 	{ id: 'ev2', petName: 'ชาบู', type: 'ตรวจสุขภาพ', title: 'ตรวจสุขภาพประจำปี', date: '10 ส.ค. 2569', color: 'bg-green-100 text-green-700' },

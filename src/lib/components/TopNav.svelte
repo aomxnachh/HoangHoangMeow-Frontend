@@ -1,10 +1,18 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { getSession, logout } from '$lib/api';
+	import { onMount } from 'svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	let { title = '', subtitle = '', activeReminders = 0 }: { title?: string; subtitle?: string; activeReminders?: number } = $props();
-	let session = getSession();
+	let session = $state(getSession());
 	let isDropdownOpen = $state(false);
+
+	onMount(() => {
+		const updateSession = () => { session = getSession(); };
+		window.addEventListener('session_updated', updateSession);
+		return () => window.removeEventListener('session_updated', updateSession);
+	});
 
 	async function handleLogout() {
 		logout();
@@ -20,7 +28,7 @@
 	};
 </script>
 
-<header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white/80 px-6 backdrop-blur-md">
+<header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/40 glass px-6">
 	<div>
 		{#if title}
 			<h1 class="text-xl font-bold text-gray-800">{title}</h1>
@@ -31,9 +39,8 @@
 	</div>
 
 	<div class="flex items-center gap-4">
-		<!-- Notifications -->
 		<a href="/reminders"
-			class="relative rounded-xl p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 block"
+			class="relative rounded-xl p-2 text-gray-500 transition-all duration-300 hover:bg-gray-100/50 hover:text-brand-600 hover:scale-105 block"
 		>
 			<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
 				<path
@@ -44,20 +51,19 @@
 			</svg>
 			{#if activeReminders > 0}
 				<span
-					class="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white"
+					class="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 shadow-lg shadow-brand-500/40 text-[10px] font-bold text-white animate-pulse"
 				>
 					{activeReminders}
 				</span>
 			{/if}
 		</a>
 
-		<!-- User menu -->
 		<div class="relative">
 			<button
 				onclick={toggleDropdown}
-				class="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-gray-100 transition-colors"
+				class="flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-300 hover:bg-white/60 hover:shadow-sm"
 			>
-				<div class="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+				<div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700 shadow-inner">
 					{getUserInitial(session?.user.username || 'U')}
 				</div>
 				<div class="hidden sm:block text-left">
@@ -66,17 +72,21 @@
 				</div>
 			</button>
 
-			<!-- Dropdown menu -->
 			{#if isDropdownOpen}
-				<div class="absolute right-0 mt-2 w-48 rounded-lg bg-white shadow-lg border border-gray-200">
-					<a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg">
-						⚙️ ตั้งค่า
+				<div class="absolute right-0 mt-2 w-48 rounded-xl glass-heavy border border-white/60 shadow-xl shadow-brand-500/5 animate-fade-in origin-top-right">
+					<a href="/settings" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-brand-50 hover:text-brand-700 first:rounded-t-xl">
+						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+							<circle cx="12" cy="12" r="3" />
+						</svg>
+						ตั้งค่า
 					</a>
 					<button
 						onclick={handleLogout}
-						class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 last:rounded-b-lg border-t border-gray-200"
+						class="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 last:rounded-b-xl border-t border-gray-100 text-left"
 					>
-						🚪 ออกจากระบบ
+						<Icon name="log-out" class="w-4 h-4" />
+						ออกจากระบบ
 					</button>
 				</div>
 			{/if}

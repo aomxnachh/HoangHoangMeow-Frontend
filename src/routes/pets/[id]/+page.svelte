@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import TopNav from '$lib/components/TopNav.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { pets as mockPets, healthRecords as mockHealthRecords, carePlans as mockCarePlans } from '$lib/data/mock-data';
 	import { ApiError, api, request } from '$lib/api';
 	import { goto } from '$app/navigation';
@@ -129,8 +130,12 @@
 	<div class="rounded-2xl border border-gray-200 bg-white p-6">
 		<div class="flex flex-col gap-6 sm:flex-row sm:items-center">
 			<!-- Avatar -->
-			<div class="flex h-24 w-24 items-center justify-center rounded-2xl bg-gray-50 text-5xl">
-				{pet.image}
+			<div class="flex h-24 w-24 items-center justify-center rounded-2xl bg-gray-50 text-5xl overflow-hidden">
+				{#if !pet.image || pet.image === '🐾' || pet.image.match(/[\u{1F300}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/u)}
+					<Icon name={pet.species === 'หมา' ? 'dog' : 'cat'} class="w-12 h-12 text-gray-400" />
+				{:else}
+					<img src={pet.image} alt={pet.name} class="w-full h-full object-cover" />
+				{/if}
 			</div>
 
 			<!-- Info -->
@@ -146,12 +151,12 @@
 					</span>
 				</div>
 				<div class="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
-					<span> 🐾 {pet.species}</span>
-					<span>🏷️ {pet.breed}</span>
-					<span>⚧️ {pet.gender}</span>
-					<span>📅 {pet.age}</span>
-					<span>⚖️ {pet.weight}</span>
-					<span>🎨 {pet.color}</span>
+					<span class="flex items-center gap-1.5"><Icon name="collar" class="w-4 h-4" /> {pet.species}</span>
+					<span class="flex items-center gap-1.5"><Icon name="id-card" class="w-4 h-4" /> {pet.breed}</span>
+					<span class="flex items-center gap-1.5"><Icon name="gender" class="w-4 h-4" /> {pet.gender}</span>
+					<span class="flex items-center gap-1.5"><Icon name="calendar" class="w-4 h-4" /> {pet.age}</span>
+					<span class="flex items-center gap-1.5"><Icon name="weight" class="w-4 h-4" /> {pet.weight}</span>
+					<span class="flex items-center gap-1.5"><Icon name="palette" class="w-4 h-4" /> {pet.color}</span>
 				</div>
 			</div>
 
@@ -204,7 +209,7 @@
 		<!-- General Info -->
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 			<div class="rounded-2xl border border-gray-200 bg-white p-6">
-				<h3 class="text-base font-bold text-gray-800 mb-4">📋 ข้อมูลพื้นฐาน</h3>
+				<h3 class="text-base font-bold text-gray-800 mb-4 flex items-center gap-1.5"><Icon name="clipboard" class="w-5 h-5 text-gray-600" /> ข้อมูลพื้นฐาน</h3>
 				<div class="space-y-3">
 					{#each [
 						{ label: 'ชื่อ', value: pet.name },
@@ -224,16 +229,16 @@
 			</div>
 
 			<div class="rounded-2xl border border-gray-200 bg-white p-6">
-				<h3 class="text-base font-bold text-gray-800 mb-4">💊 ประวัติการรักษาล่าสุด</h3>
+				<h3 class="text-base font-bold text-gray-800 mb-4 flex items-center gap-1.5"><Icon name="pill" class="w-5 h-5 text-gray-600" /> ประวัติการรักษาล่าสุด</h3>
 				{#each petRecords.slice(0, 4) as record}
 					<div class="flex items-start gap-3 border-b border-gray-100 pb-3 last:border-0 last:pb-0">
 						<div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {record.type === 'วัคซีน' ? 'bg-blue-100 text-blue-600' : record.type === 'ตรวจสุขภาพ' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}">
 							{#if record.type === 'วัคซีน'}
-								💉
+								<Icon name="syringe" class="w-5 h-5" />
 							{:else if record.type === 'ตรวจสุขภาพ'}
-								🩺
+								<Icon name="stethoscope" class="w-5 h-5" />
 							{:else}
-								🦷
+								<Icon name="tooth" class="w-5 h-5" />
 							{/if}
 						</div>
 						<div class="min-w-0 flex-1">
@@ -250,7 +255,7 @@
 		<div class="rounded-2xl border border-gray-200 bg-white">
 			<div class="flex items-center justify-between p-6 pb-4">
 				<div class="flex items-center gap-3">
-					<h3 class="text-base font-bold text-gray-800">📋 บันทึกสุขภาพทั้งหมด</h3>
+					<h3 class="text-base font-bold text-gray-800 flex items-center gap-1.5"><Icon name="clipboard" class="w-5 h-5 text-gray-600" /> บันทึกสุขภาพทั้งหมด</h3>
 					<span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
 						{petRecords.length} รายการ
 					</span>

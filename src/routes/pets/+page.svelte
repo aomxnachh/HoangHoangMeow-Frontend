@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import TopNav from '$lib/components/TopNav.svelte';
 	import PetCard from '$lib/components/PetCard.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import type { Pet } from '$lib/data/mock-data';
 	import { ApiError, api } from '$lib/api';
 	import { i18n } from '$lib/i18n';
@@ -90,14 +91,14 @@
 					type="text"
 					placeholder="ค้นหาชื่อหรือพันธุ์..."
 					bind:value={searchQuery}
-					class="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 placeholder-gray-400 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+					class="w-full rounded-2xl border-2 border-transparent bg-white/60 py-3 pl-11 pr-4 text-sm text-gray-700 placeholder-gray-400 outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 				/>
 			</div>
 
 			<!-- Filter -->
 			<select
 				bind:value={filterSpecies}
-				class="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+				class="rounded-2xl border-2 border-transparent bg-white/60 px-5 py-3 text-sm text-gray-700 outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white appearance-none cursor-pointer"
 			>
 				{#each speciesOptions as opt}
 					<option value={opt}>{opt}</option>
@@ -108,12 +109,15 @@
 		<!-- Add Pet Button -->
 		<button
 			onclick={() => (showAddModal = true)}
-			class="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+			class="group relative flex items-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40"
 		>
-			<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-				<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-			</svg>
-			เพิ่มสัตว์เลี้ยง
+			<span class="relative z-10 flex items-center gap-2">
+				<svg class="h-5 w-5 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+				</svg>
+				เพิ่มสัตว์เลี้ยง
+			</span>
+			<div class="absolute inset-0 h-full w-full bg-white/20 opacity-0 transition-opacity group-hover:opacity-100"></div>
 		</button>
 	</div>
 
@@ -128,7 +132,7 @@
 
 	{#if filteredPets.length === 0}
 		<div class="py-20 text-center">
-			<div class="text-5xl">🔍</div>
+			<div class="flex justify-center text-gray-300"><Icon name="search" class="w-16 h-16" /></div>
 			<p class="mt-4 text-gray-500">ไม่พบสัตว์เลี้ยงที่ตรงกับการค้นหา</p>
 		</div>
 	{/if}
@@ -137,19 +141,22 @@
 	{#if showAddModal}
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
-			class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+			class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4 transition-all"
 			onclick={(e) => { if (e.target === e.currentTarget) showAddModal = false; }}
 			onkeydown={(e) => { if (e.key === 'Escape') showAddModal = false; }}
 			role="button"
 			tabindex="0"
 		>
-			<div class="mx-4 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-				<div class="flex items-center justify-between mb-6">
-					<h2 class="text-lg font-bold text-gray-800">เพิ่มสัตว์เลี้ยงใหม่</h2>
+			<div class="mx-auto w-full max-w-xl rounded-3xl glass-heavy border border-white/60 p-8 shadow-2xl animate-fade-up cursor-default">
+				<div class="flex items-center justify-between mb-8">
+					<h2 class="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
+						<span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-600"><Icon name="sparkles" class="w-6 h-6" /></span>
+						เพิ่มสัตว์เลี้ยง
+					</h2>
 					<button
 						aria-label="ปิดหน้าต่างเพิ่มสัตว์เลี้ยง"
 						onclick={() => (showAddModal = false)}
-						class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+						class="rounded-xl bg-gray-100/50 p-2 text-gray-500 hover:bg-rose-100 hover:text-rose-600 transition-colors"
 					>
 						<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -167,35 +174,32 @@
 								required
 								bind:value={newPet.name}
 								placeholder="เช่น โมจิ"
-								class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 							/>
 						</div>
 						<div>
-							<label for="pet-species" class="mb-1 block text-sm font-medium text-gray-700">ชนิด</label>
-							<select id="pet-species" bind:value={newPet.species} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
-								<option>แมว</option>
-								<option>หมา</option>
-								<option>กระต่าย</option>
-								<option>นก</option>
-								<option>อื่นๆ</option>
+							<label for="pet-species" class="mb-1.5 block text-sm font-bold text-gray-700">ชนิด</label>
+							<select id="pet-species" bind:value={newPet.species} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
+								<option value="แมว">แมว</option>
+								<option value="หมา">หมา</option>
 							</select>
 						</div>
 					</div>
 
 					<div class="grid grid-cols-2 gap-4">
 						<div>
-							<label for="pet-breed" class="mb-1 block text-sm font-medium text-gray-700">พันธุ์</label>
+							<label for="pet-breed" class="mb-1.5 block text-sm font-bold text-gray-700">พันธุ์</label>
 							<input
 								id="pet-breed"
 								type="text"
 								bind:value={newPet.breed}
 								placeholder="เช่น สก็อตติชโฟลด์"
-								class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 							/>
 						</div>
 						<div>
-							<label for="pet-gender" class="mb-1 block text-sm font-medium text-gray-700">เพศ</label>
-							<select id="pet-gender" bind:value={newPet.gender} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+							<label for="pet-gender" class="mb-1.5 block text-sm font-bold text-gray-700">เพศ</label>
+							<select id="pet-gender" bind:value={newPet.gender} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
 								<option value="UNKNOWN">ไม่ระบุ</option>
 								<option value="MALE">เพศผู้</option>
 								<option value="FEMALE">เพศเมีย</option>
@@ -205,75 +209,76 @@
 
 					<div class="grid grid-cols-2 gap-4">
 						<div>
-							<label for="pet-age" class="mb-1 block text-sm font-medium text-gray-700">อายุ</label>
+							<label for="pet-age" class="mb-1.5 block text-sm font-bold text-gray-700">อายุ (วันเกิด)</label>
 							<input
 								id="pet-age"
 								type="date"
 								bind:value={newPet.birthdate}
-								class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 							/>
 						</div>
 						<div>
-							<label for="pet-weight" class="mb-1 block text-sm font-medium text-gray-700">น้ำหนัก</label>
+							<label for="pet-weight" class="mb-1.5 block text-sm font-bold text-gray-700">น้ำหนัก</label>
 							<input
 								id="pet-weight"
 								type="number"
 								step="0.01"
 								bind:value={newPet.weight}
 								placeholder="เช่น 3.5 กก."
-								class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 							/>
 						</div>
 					</div>
 
 					<div class="grid grid-cols-2 gap-4">
 						<div>
-							<label for="pet-color" class="mb-1 block text-sm font-medium text-gray-700">สี</label>
+							<label for="pet-color" class="mb-1.5 block text-sm font-bold text-gray-700">สี</label>
 							<input
 								id="pet-color"
 								type="text"
 								bind:value={newPet.color}
 								placeholder="เช่น ส้ม"
-								class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 							/>
 						</div>
 						<div>
-							<label for="pet-allergies" class="mb-1 block text-sm font-medium text-gray-700">ข้อมูลการแพ้</label>
+							<label for="pet-allergies" class="mb-1.5 block text-sm font-bold text-gray-700">ข้อมูลการแพ้</label>
 							<textarea
 								id="pet-allergies"
 								bind:value={newPet.allergies}
 								placeholder="เช่น แพ้ยา..."
 								rows="1"
-								class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 							></textarea>
 						</div>
 					</div>
 
 					<div>
-						<label for="pet-notes" class="mb-1 block text-sm font-medium text-gray-700">หมายเหตุเพิ่มเติม</label>
+						<label for="pet-notes" class="mb-1.5 block text-sm font-bold text-gray-700">หมายเหตุเพิ่มเติม</label>
 						<textarea
 							id="pet-notes"
 							bind:value={newPet.notes}
 							placeholder="ข้อมูลอื่นๆ ที่เป็นประโยชน์"
 							rows="2"
-							class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+							class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 						></textarea>
 					</div>
 
-					<div class="flex justify-end gap-3 pt-2">
+					<div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
 						<button
 							type="button"
 							onclick={() => (showAddModal = false)}
-							class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+							class="rounded-2xl bg-white px-6 py-3 text-sm font-bold text-gray-600 transition-all hover:bg-gray-50 hover:text-gray-900 border border-gray-200 shadow-sm"
 						>
 							ยกเลิก
 						</button>
 						<button
 							type="submit"
 							disabled={saving}
-							class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+							class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-8 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 disabled:opacity-70 disabled:pointer-events-none group"
 						>
-							{saving ? 'กำลังบันทึก…' : 'บันทึก'}
+							<span class="relative z-10">{saving ? 'กำลังบันทึก…' : 'บันทึก'}</span>
+							<div class="absolute inset-0 h-full w-full bg-white/20 opacity-0 transition-opacity group-hover:opacity-100"></div>
 						</button>
 					</div>
 				</form>
@@ -291,7 +296,7 @@
 			tabindex="0"
 		>
 			<div class="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl text-center">
-				<div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-3xl">👑</div>
+				<div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-500"><Icon name="crown" class="w-8 h-8" /></div>
 				<h2 class="mt-4 text-xl font-bold text-gray-800">ถึงขีดจำกัดแล้ว!</h2>
 				<p class="mt-2 text-sm text-gray-500">แพ็กเกจ Free สามารถเพิ่มสัตว์เลี้ยงได้สูงสุด <strong class="text-gray-700">3 ตัว</strong> เท่านั้น</p>
 				<p class="mt-1 text-sm text-gray-500">อัปเกรดเป็น <span class="font-semibold text-amber-600">Premium</span> เพื่อเพิ่มสัตว์เลี้ยงได้ไม่จำกัด</p>
@@ -304,9 +309,9 @@
 					</button>
 					<button
 						onclick={() => { showLimitPopup = false; goto('/upgrade'); }}
-						class="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg hover:from-amber-600 hover:to-orange-600"
+						class="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg hover:from-amber-600 hover:to-orange-600"
 					>
-						👑 อัปเกรดเลย
+						<Icon name="crown" class="w-4 h-4" /> อัปเกรดเลย
 					</button>
 				</div>
 			</div>

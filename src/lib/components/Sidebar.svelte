@@ -42,13 +42,13 @@
 </script>
 
 <aside
-	class="fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-gray-200 bg-white transition-all duration-300 {collapsed
+	class="fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-white/40 bg-white/80 backdrop-blur-xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-500 ease-in-out {collapsed
 		? 'w-20'
 		: 'w-64'}"
 >
 	<!-- Logo / Brand -->
-	<div class="flex h-16 items-center gap-3 border-b border-gray-200 px-4">
-		<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white">
+	<div class="flex h-16 items-center gap-3 border-b border-gray-100 px-4">
+		<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/30 transition-transform duration-300 hover:scale-105">
 			<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 				<path
 					stroke-linecap="round"
@@ -69,9 +69,9 @@
 				<li>
 					<a
 						href={item.href}
-						class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors {isActive(item.href)
-							? 'bg-indigo-50 text-indigo-700'
-							: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}"
+						class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 {isActive(item.href)
+							? 'bg-brand-50 text-brand-700 shadow-sm'
+							: 'text-gray-600 hover:bg-gray-50/80 hover:text-gray-900 hover:translate-x-1'}"
 						title={collapsed ? item.label : undefined}
 					>
 						{#if item.icon === 'layout-dashboard'}
@@ -133,9 +133,9 @@
 					<li>
 						<a
 							href={item.href}
-							class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors {isActive(item.href)
-								? 'bg-purple-50 text-purple-700'
-								: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}"
+							class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 {isActive(item.href)
+								? 'bg-purple-50 text-purple-700 shadow-sm'
+								: 'text-gray-600 hover:bg-gray-50/80 hover:text-gray-900 hover:translate-x-1'}"
 							title={collapsed ? item.label : undefined}
 						>
 							{#if item.icon === 'shield'}
@@ -162,10 +162,10 @@
 	</nav>
 
 	<!-- Collapse toggle -->
-	<div class="border-t border-gray-200 px-3 py-3">
+	<div class="border-t border-gray-100 px-3 py-3">
 		<button
 			onclick={onToggle}
-			class="flex w-full items-center justify-center rounded-xl p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+			class="flex w-full items-center justify-center rounded-xl p-2 text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-800 hover:scale-105 active:scale-95"
 		>
 			{#if collapsed}
 				<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">

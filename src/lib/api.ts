@@ -1,4 +1,4 @@
-﻿import { browser } from '$app/environment';
+import { browser } from '$app/environment';
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -36,12 +36,14 @@ export function saveSession(token: string, user: SessionUser) {
 	if (!browser) return;
 	localStorage.setItem('hhm_token', token);
 	localStorage.setItem('hhm_user', JSON.stringify(user));
+	window.dispatchEvent(new CustomEvent('session_updated'));
 }
 
 export function clearSession() {
 	if (!browser) return;
 	localStorage.removeItem('hhm_token');
 	localStorage.removeItem('hhm_user');
+	window.dispatchEvent(new CustomEvent('session_updated'));
 }
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import TopNav from '$lib/components/TopNav.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { ApiError, api, request } from '$lib/api';
 	let pets = $state<any[]>([]);
 	let reminders = $state<any[]>([]);
@@ -50,7 +51,7 @@
 	async function loadReminders() {
 		try {
 			const [petResult, reminderResult] = await Promise.all([api<{ pets: any[] }>('/api/pets'), api<{ reminders: any[] }>('/api/reminders')]);
-			pets = petResult.pets.map((pet) => ({ ...pet, id: String(pet.id), image: pet.image || '🐾' }));
+			pets = petResult.pets.map((pet) => ({ ...pet, id: String(pet.id) }));
 			if (pets.length) selectedPet = pets[0].id;
 			reminders = reminderResult.reminders.map((item) => { const when = item.scheduledAt ? new Date(item.scheduledAt) : null; return { ...item, id: String(item.id), petId: String(item.petId), date: when ? when.toLocaleDateString('th-TH') : '-', time: when ? when.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '-', repeat: item.recurrenceDays ? `ทุก ${item.recurrenceDays} วัน` : 'ไม่ซ้ำ', status: item.status === 'DONE' ? 'completed' : item.snoozedUntil ? 'snoozed' : 'active' }; });
 		} catch (err) { error = err instanceof ApiError ? err.message : 'ไม่สามารถโหลดการแจ้งเตือนได้'; }
@@ -156,7 +157,7 @@
 				class="w-full max-w-[200px] rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 			>
 				{#each petNames as name}
-					<option value={name}>🐾 {name}</option>
+					<option value={name}>{name}</option>
 				{/each}
 			</select>
 			<select
@@ -202,7 +203,9 @@
 								</td>
 								<td class="px-6 py-4">
 									<div class="flex items-center gap-2 text-sm font-medium text-gray-700">
-										<span class="text-xl">{pet?.image}</span>
+										<span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-500">
+											<Icon name={pet?.species === 'หมา' ? 'dog' : 'cat'} class="w-5 h-5" />
+										</span>
 										{reminder.petName}
 									</div>
 								</td>

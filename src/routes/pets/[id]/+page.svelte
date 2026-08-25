@@ -124,10 +124,10 @@
 
 <TopNav title={pet.name} subtitle={pet.species + ' · ' + pet.breed} />
 
-<div class="p-6 space-y-6">
+<div class="p-4 space-y-6 sm:p-6 lg:p-8">
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
 	<!-- Pet Profile Header -->
-	<div class="rounded-2xl border border-gray-200 bg-white p-6">
+		<div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
 		<div class="flex flex-col gap-6 sm:flex-row sm:items-center">
 			<!-- Avatar -->
 			<div class="flex h-24 w-24 items-center justify-center rounded-2xl bg-gray-50 text-5xl overflow-hidden">
@@ -190,11 +190,11 @@
 
 	<!-- Tab Navigation -->
 	<div class="border-b border-gray-200">
-		<nav class="flex gap-0">
+		<nav class="flex gap-0 overflow-x-auto">
 			{#each tabs as tab}
 				<button
 					onclick={() => (activeTab = tab.id)}
-					class="relative border-b-2 px-6 py-3 text-sm font-medium transition-colors {activeTab === tab.id
+					class="relative shrink-0 border-b-2 px-6 py-3 text-sm font-medium transition-colors {activeTab === tab.id
 						? 'border-indigo-600 text-indigo-700'
 						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}"
 				>
@@ -208,7 +208,7 @@
 	{#if activeTab === 'info'}
 		<!-- General Info -->
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-			<div class="rounded-2xl border border-gray-200 bg-white p-6">
+			<div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
 				<h3 class="text-base font-bold text-gray-800 mb-4 flex items-center gap-1.5"><Icon name="clipboard" class="w-5 h-5 text-gray-600" /> ข้อมูลพื้นฐาน</h3>
 				<div class="space-y-3">
 					{#each [
@@ -228,7 +228,7 @@
 				</div>
 			</div>
 
-			<div class="rounded-2xl border border-gray-200 bg-white p-6">
+			<div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
 				<h3 class="text-base font-bold text-gray-800 mb-4 flex items-center gap-1.5"><Icon name="pill" class="w-5 h-5 text-gray-600" /> ประวัติการรักษาล่าสุด</h3>
 				{#each petRecords.slice(0, 4) as record}
 					<div class="flex items-start gap-3 border-b border-gray-100 pb-3 last:border-0 last:pb-0">
@@ -343,10 +343,10 @@
 			role="button"
 			tabindex="0"
 		>
-			<div class="mx-4 my-8 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl cursor-default">
+			<div class="mx-4 my-8 w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl cursor-default sm:p-6">
 				<h2 class="text-lg font-bold text-gray-800 mb-6">แก้ไขข้อมูลสัตว์เลี้ยง</h2>
 				<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); saveEditPet(); }}>
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">ชื่อ</label>
 							<input type="text" required bind:value={editPetData.name} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
@@ -362,7 +362,7 @@
 							</select>
 						</div>
 					</div>
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">พันธุ์</label>
 							<input type="text" bind:value={editPetData.breed} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
@@ -376,7 +376,7 @@
 							</select>
 						</div>
 					</div>
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">วันเกิด</label>
 							<input type="date" bind:value={editPetData.birthdate} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
@@ -386,7 +386,7 @@
 							<input type="number" step="0.01" bind:value={editPetData.weight} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
 						</div>
 					</div>
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">สี</label>
 							<input type="text" bind:value={editPetData.color} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
@@ -433,7 +433,7 @@
 			role="button"
 			tabindex="0"
 		>
-			<div class="mx-4 my-8 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl cursor-default">
+			<div class="mx-4 my-8 w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl cursor-default sm:p-6">
 				<h2 class="text-lg font-bold text-gray-800 mb-6">เพิ่มบันทึกสุขภาพ</h2>
 				<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); saveHealthRecord(); }}>
 					<div>
@@ -455,7 +455,7 @@
 						<label class="mb-1 block text-sm font-medium text-gray-700">รายละเอียด (เพิ่มเติม)</label>
 						<textarea bind:value={newHealthRecord.description} rows="2" class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"></textarea>
 					</div>
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">วันที่</label>
 							<input type="date" required bind:value={newHealthRecord.date} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />

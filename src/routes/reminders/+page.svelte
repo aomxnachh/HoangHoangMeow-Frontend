@@ -100,7 +100,7 @@
 
 <TopNav title="การแจ้งเตือน" subtitle="จัดการนัดหมายและกิจวัตรของสัตว์เลี้ยง" />
 
-<div class="space-y-6 p-6 animate-fade-in stagger-1">
+<div class="space-y-6 p-4 animate-fade-in stagger-1 sm:p-6 lg:p-8">
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
 	<div class="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
 		<div class="flex rounded-xl border border-gray-200 bg-gray-50 p-1">

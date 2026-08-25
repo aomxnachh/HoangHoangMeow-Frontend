@@ -3,7 +3,17 @@
 	import { browser } from '$app/environment';
 	import { getSession } from '$lib/api';
 
-	let { collapsed = false, onToggle }: { collapsed?: boolean; onToggle?: () => void } = $props();
+	let {
+		collapsed = false,
+		mobileOpen = false,
+		onToggle,
+		onClose
+	}: {
+		collapsed?: boolean;
+		mobileOpen?: boolean;
+		onToggle?: () => void;
+		onClose?: () => void;
+	} = $props();
 
 	let isAdmin = $state(false);
 
@@ -30,6 +40,7 @@
 
 	const adminItems = [
 		{ label: 'แดชบอร์ด Admin', href: '/admin', icon: 'shield' },
+		{ label: 'จัดการผู้ใช้', href: '/admin/users', icon: 'users' },
 		{ label: 'จัดการโฆษณา', href: '/admin/ads', icon: 'megaphone' },
 		{ label: 'จัดการคำแนะนำ', href: '/admin/recommendations', icon: 'sparkles' }
 	];
@@ -39,12 +50,22 @@
 		if (href === '/admin' && $page.url.pathname !== '/admin') return false;
 		return $page.url.pathname.startsWith(href);
 	}
+
+	let expanded = $derived(!collapsed || mobileOpen);
 </script>
 
+{#if mobileOpen}
+	<button
+		class="fixed inset-0 z-30 bg-gray-900/40 backdrop-blur-sm lg:hidden"
+		aria-label="ปิดเมนู"
+		onclick={onClose}
+	></button>
+{/if}
+
 <aside
-	class="fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-white/40 bg-white/80 backdrop-blur-xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-500 ease-in-out {collapsed
-		? 'w-20'
-		: 'w-64'}"
+	class="fixed left-0 top-0 z-40 flex h-dvh w-72 -translate-x-full flex-col border-r border-white/40 bg-white/95 shadow-[4px_0_24px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all duration-300 ease-in-out lg:translate-x-0 lg:bg-white/80 lg:shadow-[4px_0_24px_rgba(0,0,0,0.02)] {mobileOpen
+		? 'translate-x-0'
+		: '-translate-x-full'} {collapsed ? 'lg:w-20' : 'lg:w-64'}"
 >
 	<!-- Logo / Brand -->
 	<div class="flex h-16 items-center gap-3 border-b border-gray-100 px-4">
@@ -57,7 +78,7 @@
 				/>
 			</svg>
 		</div>
-		{#if !collapsed}
+		{#if expanded}
 			<span class="text-lg font-bold text-gray-800 whitespace-nowrap">PetCare</span>
 		{/if}
 	</div>
@@ -72,7 +93,8 @@
 						class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 {isActive(item.href)
 							? 'bg-brand-50 text-brand-700 shadow-sm'
 							: 'text-gray-600 hover:bg-gray-50/80 hover:text-gray-900 hover:translate-x-1'}"
-						title={collapsed ? item.label : undefined}
+						title={!expanded ? item.label : undefined}
+						onclick={onClose}
 					>
 						{#if item.icon === 'layout-dashboard'}
 							<svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -112,7 +134,7 @@
 								<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
 							</svg>
 						{/if}
-						{#if !collapsed}
+						{#if expanded}
 							<span class="whitespace-nowrap">{item.label}</span>
 						{/if}
 					</a>
@@ -122,7 +144,7 @@
 
 		{#if isAdmin}
 			<div class="mt-8 mb-2 px-3">
-				{#if !collapsed}
+				{#if expanded}
 					<h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">ผู้ดูแลระบบ</h3>
 				{:else}
 					<div class="h-px bg-gray-200 my-2"></div>
@@ -136,11 +158,16 @@
 							class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 {isActive(item.href)
 								? 'bg-purple-50 text-purple-700 shadow-sm'
 								: 'text-gray-600 hover:bg-gray-50/80 hover:text-gray-900 hover:translate-x-1'}"
-							title={collapsed ? item.label : undefined}
+							title={!expanded ? item.label : undefined}
+							onclick={onClose}
 						>
 							{#if item.icon === 'shield'}
 								<svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
 									<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+								</svg>
+							{:else if item.icon === 'users'}
+								<svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
 								</svg>
 							{:else if item.icon === 'megaphone'}
 								<svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -151,7 +178,7 @@
 									<path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09l2.846.813-.813 2.846a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
 								</svg>
 							{/if}
-							{#if !collapsed}
+							{#if expanded}
 								<span class="whitespace-nowrap">{item.label}</span>
 							{/if}
 						</a>
@@ -162,7 +189,7 @@
 	</nav>
 
 	<!-- Collapse toggle -->
-	<div class="border-t border-gray-100 px-3 py-3">
+	<div class="hidden border-t border-gray-100 px-3 py-3 lg:block">
 		<button
 			onclick={onToggle}
 			class="flex w-full items-center justify-center rounded-xl p-2 text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-800 hover:scale-105 active:scale-95"

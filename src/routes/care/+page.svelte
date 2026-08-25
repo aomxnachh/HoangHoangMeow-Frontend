@@ -100,10 +100,10 @@
 
 <TopNav title={i18n.care.title} subtitle={i18n.care.subtitle} />
 
-<div class="p-6 space-y-6 animate-fade-in stagger-1">
+<div class="p-4 space-y-6 animate-fade-in stagger-1 sm:p-6 lg:p-8">
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
 	<!-- Tabs -->
-	<div class="flex items-center gap-4">
+	<div class="flex flex-wrap items-center gap-3 sm:gap-4">
 		<div class="flex rounded-xl border border-gray-200 bg-white p-1">
 			<button
 				onclick={() => (activeTab = 'plans')}
@@ -125,7 +125,7 @@
 
 		<select
 			bind:value={filterPet}
-			class="w-full max-w-[200px] rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
+			class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white sm:max-w-[200px]"
 		>
 			{#each petNames as name}
 				<option value={name}>🐾 {name}</option>
@@ -133,7 +133,7 @@
 		</select>
 
 		{#if activeTab === 'plans'}
-			<button onclick={openAddModal} class="ml-auto relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group">
+			<button onclick={openAddModal} class="relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group sm:ml-auto sm:w-auto">
 				+ สร้างแผนดูแล
 			</button>
 		{/if}
@@ -239,8 +239,8 @@
 </div>
 
 {#if showModal}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4">
-		<div class="w-full max-w-md rounded-3xl glass-heavy p-8 shadow-xl">
+	<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md">
+		<div class="my-auto w-full max-w-md rounded-3xl glass-heavy p-5 shadow-xl sm:p-8">
 			<h2 class="text-xl font-bold text-gray-800 mb-4">{isEditing ? 'แก้ไขแผนดูแล' : 'สร้างแผนดูแล'}</h2>
 			<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-4">
 				<div>
@@ -271,7 +271,7 @@
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="nextDueAt">วันที่ครบกำหนดครั้งถัดไป</label>
 					<input type="date" id="nextDueAt" bind:value={formData.nextDueAt} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
 				</div>
-				<div class="mt-6 flex justify-end gap-3">
+				<div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 					<button type="button" onclick={() => showModal = false} class="rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
 						ยกเลิก
 					</button>

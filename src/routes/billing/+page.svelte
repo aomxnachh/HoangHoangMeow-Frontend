@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import TopNav from '$lib/components/TopNav.svelte';
-	import { getSession, api, request, ApiError } from '$lib/api';
+	import { getSession, api, request, ApiError, saveSession } from '$lib/api';
 
 	let planType = $state<'FREE' | 'PREMIUM'>('FREE');
 	let payments = $state<Array<any>>([]);
@@ -29,8 +29,15 @@
 		canceling = true;
 		error = '';
 		try {
-			await request('/api/billing/cancel', 'POST');
-			await loadBillingData(); // Reload to refresh plan status
+			const result = await request<{ user?: any }>('/api/billing/cancel', 'POST');
+			// Update local session to reflect FREE plan
+			const session = getSession();
+			if (session) {
+				const updatedUser = result?.user || { ...session.user, planType: 'FREE' };
+				saveSession(session.token, updatedUser);
+			}
+			planType = 'FREE';
+			await loadBillingData();
 		} catch (err) {
 			error = err instanceof ApiError ? err.message : 'ไม่สามารถยกเลิกได้';
 		} finally {

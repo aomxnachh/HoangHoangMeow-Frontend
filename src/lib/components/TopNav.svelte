@@ -1,12 +1,24 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { getContext } from 'svelte';
 	import { getSession, logout } from '$lib/api';
 	import { onMount } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
-	let { title = '', subtitle = '', activeReminders = 0 }: { title?: string; subtitle?: string; activeReminders?: number } = $props();
+	let {
+		title = '',
+		subtitle = '',
+		activeReminders = 0,
+		onMenuToggle
+	}: {
+		title?: string;
+		subtitle?: string;
+		activeReminders?: number;
+		onMenuToggle?: () => void;
+	} = $props();
 	let session = $state(getSession());
 	let isDropdownOpen = $state(false);
+	const toggleMobileMenu = getContext<() => void>('toggleMobileMenu');
 
 	onMount(() => {
 		const updateSession = () => { session = getSession(); };
@@ -28,17 +40,28 @@
 	};
 </script>
 
-<header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/40 glass px-6">
-	<div>
-		{#if title}
-			<h1 class="text-xl font-bold text-gray-800">{title}</h1>
-		{/if}
-		{#if subtitle}
-			<p class="text-sm text-gray-500">{subtitle}</p>
-		{/if}
+<header class="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-white/40 glass px-4 sm:px-6">
+	<div class="flex min-w-0 items-center gap-2 sm:gap-3">
+		<button
+			class="rounded-xl p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 lg:hidden"
+			aria-label="เปิดเมนู"
+			onclick={() => (onMenuToggle ?? toggleMobileMenu)?.()}
+		>
+			<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+			</svg>
+		</button>
+		<div class="min-w-0">
+			{#if title}
+				<h1 class="truncate text-base font-bold text-gray-800 sm:text-xl">{title}</h1>
+			{/if}
+			{#if subtitle}
+				<p class="truncate text-xs text-gray-500 sm:text-sm">{subtitle}</p>
+			{/if}
+		</div>
 	</div>
 
-	<div class="flex items-center gap-4">
+	<div class="flex shrink-0 items-center gap-1 sm:gap-4">
 		<a href="/reminders"
 			class="relative rounded-xl p-2 text-gray-500 transition-all duration-300 hover:bg-gray-100/50 hover:text-brand-600 hover:scale-105 block"
 		>
@@ -61,7 +84,7 @@
 		<div class="relative">
 			<button
 				onclick={toggleDropdown}
-				class="flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-300 hover:bg-white/60 hover:shadow-sm"
+				class="flex items-center gap-3 rounded-lg p-2 sm:px-3 transition-all duration-300 hover:bg-white/60 hover:shadow-sm"
 			>
 				<div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700 shadow-inner">
 					{getUserInitial(session?.user.username || 'U')}

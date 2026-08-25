@@ -68,10 +68,10 @@
 
 <TopNav title={i18n.pets.title} subtitle={i18n.pets.subtitle} />
 
-<div class="p-6 space-y-6">
+<div class="p-4 space-y-6 sm:p-6 lg:p-8">
 	<!-- Search & Filter Bar -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="flex flex-1 gap-3">
+		<div class="flex w-full flex-1 flex-col gap-3 min-[480px]:flex-row">
 			<!-- Search -->
 			<div class="relative flex-1 max-w-md">
 				<svg
@@ -109,7 +109,7 @@
 		<!-- Add Pet Button -->
 		<button
 			onclick={() => (showAddModal = true)}
-			class="group relative flex items-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40"
+			class="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 sm:w-auto"
 		>
 			<span class="relative z-10 flex items-center gap-2">
 				<svg class="h-5 w-5 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -124,7 +124,7 @@
 	<!-- Pet Grid -->
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
 	{#if loading}<p class="py-12 text-center text-sm text-gray-500">กำลังโหลดข้อมูล…</p>{/if}
-	<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+	<div class="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
 		{#each filteredPets as pet (pet.id)}
 			<PetCard {pet} />
 		{/each}
@@ -147,7 +147,7 @@
 			role="button"
 			tabindex="0"
 		>
-			<div class="mx-auto w-full max-w-xl rounded-3xl glass-heavy border border-white/60 p-8 shadow-2xl animate-fade-up cursor-default">
+			<div class="mx-auto max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto rounded-3xl border border-white/60 glass-heavy p-5 shadow-2xl animate-fade-up cursor-default sm:p-8">
 				<div class="flex items-center justify-between mb-8">
 					<h2 class="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
 						<span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-600"><Icon name="sparkles" class="w-6 h-6" /></span>
@@ -165,7 +165,7 @@
 				</div>
 
 				<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); addPet(); }}>
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label for="pet-name" class="mb-1 block text-sm font-medium text-gray-700">ชื่อ</label>
 							<input
@@ -186,7 +186,7 @@
 						</div>
 					</div>
 
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label for="pet-breed" class="mb-1.5 block text-sm font-bold text-gray-700">พันธุ์</label>
 							<input
@@ -207,7 +207,7 @@
 						</div>
 					</div>
 
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label for="pet-age" class="mb-1.5 block text-sm font-bold text-gray-700">อายุ (วันเกิด)</label>
 							<input
@@ -230,7 +230,7 @@
 						</div>
 					</div>
 
-					<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label for="pet-color" class="mb-1.5 block text-sm font-bold text-gray-700">สี</label>
 							<input
@@ -264,7 +264,7 @@
 						></textarea>
 					</div>
 
-					<div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+					<div class="mt-6 flex flex-col-reverse gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
 						<button
 							type="button"
 							onclick={() => (showAddModal = false)}
@@ -289,7 +289,7 @@
 	{#if showLimitPopup}
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
-			class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+			class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
 			onclick={(e) => { if (e.target === e.currentTarget) showLimitPopup = false; }}
 			onkeydown={(e) => { if (e.key === 'Escape') showLimitPopup = false; }}
 			role="button"

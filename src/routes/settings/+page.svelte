@@ -94,12 +94,12 @@
 
 <TopNav title="ตั้งค่าบัญชี" />
 
-<div class="p-6 space-y-6 max-w-3xl mx-auto animate-fade-in stagger-1">
+<div class="mx-auto max-w-3xl space-y-6 p-4 animate-fade-in stagger-1 sm:p-6 lg:p-8">
 	{#if loading}
 		<p class="py-12 text-center text-sm text-gray-500">กำลังโหลดข้อมูล…</p>
 	{:else}
 		<!-- Profile Section -->
-		<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up p-8">
+		<div class="rounded-3xl border border-white/60 glass-heavy p-5 shadow-xl animate-fade-up sm:p-8">
 			<h2 class="text-lg font-bold text-gray-800 mb-4">ข้อมูลโปรไฟล์</h2>
 			<form onsubmit={(e) => { e.preventDefault(); updateProfile(); }} class="space-y-4">
 				{#if error}<p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>{/if}
@@ -149,7 +149,7 @@
 		</div>
 
 		<!-- Password Section -->
-		<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up p-8">
+		<div class="rounded-3xl border border-white/60 glass-heavy p-5 shadow-xl animate-fade-up sm:p-8">
 			<h2 class="text-lg font-bold text-gray-800 mb-4">รหัสผ่านและความปลอดภัย</h2>
 			{#if passwordError}<p class="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{passwordError}</p>{/if}
 			{#if passwordMessage}<p class="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{passwordMessage}</p>{/if}
@@ -163,7 +163,7 @@
 		</div>
 
 		<!-- Delete Account Section -->
-		<div class="rounded-3xl glass-heavy border border-red-200/60 bg-red-50/50 shadow-xl animate-fade-up p-8">
+		<div class="rounded-3xl border border-red-200/60 bg-red-50/50 glass-heavy p-5 shadow-xl animate-fade-up sm:p-8">
 			<h2 class="text-lg font-bold text-red-700 mb-2">เขตอันตราย</h2>
 			<p class="text-sm text-red-600 mb-4">การลบบัญชีจะไม่สามารถกู้คืนได้ ข้อมูลสัตว์เลี้ยงและประวัติทั้งหมดจะถูกลบถาวร</p>
 			<button

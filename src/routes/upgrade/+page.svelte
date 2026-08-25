@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import TopNav from '$lib/components/TopNav.svelte';
-	import { ApiError, api, getSession } from '$lib/api';
+	import { ApiError, api, getSession, saveSession } from '$lib/api';
 	let error = $state('');
 	let loading = $state(false);
 	let currentPlan = $state<'FREE' | 'PREMIUM'>('FREE');
@@ -16,9 +16,28 @@
 	async function checkout() {
 		if (currentPlan === 'PREMIUM') return;
 		loading = true; error = '';
-		try { const result = await api<{ checkoutUrl: string }>('/api/billing/checkout', { method: 'POST' }); window.location.assign(result.checkoutUrl); }
-		catch (err) { error = err instanceof ApiError ? err.message : 'ไม่สามารถเริ่มการชำระเงินได้'; }
-		finally { loading = false; }
+		try {
+			const result = await api<{ checkoutUrl?: string }>('/api/billing/checkout', { method: 'POST' });
+			if (result.checkoutUrl) {
+				window.location.assign(result.checkoutUrl);
+			}
+		} catch (err) {
+			if (err instanceof ApiError && err.code === 'PAYMENT_NOT_CONFIGURED') {
+				// Fallback: simulate payment for demo/dev
+				try {
+					const simResult = await api<{ user?: any; reference?: string }>('/api/billing/simulate-payment', { method: 'POST' });
+					if (simResult.user) {
+						const session = getSession();
+						if (session) saveSession(session.token, simResult.user);
+						currentPlan = 'PREMIUM';
+					}
+				} catch (simErr) {
+					error = simErr instanceof ApiError ? simErr.message : 'ไม่สามารถจำลองการชำระเงินได้';
+				}
+			} else {
+				error = err instanceof ApiError ? err.message : 'ไม่สามารถเริ่มการชำระเงินได้';
+			}
+		} finally { loading = false; }
 	}
 
 	const freeFeatures = ['เพิ่มสัตว์เลี้ยงได้สูงสุด 3 ตัว', 'บันทึกข้อมูลสุขภาพ', 'ระบบแจ้งเตือน', 'แดชบอร์ดสรุป', 'บันทึกค่าใช้จ่ายพื้นฐาน'];
@@ -105,7 +124,7 @@
 					{/each}
 				</ul>
 				<div class="mt-10 text-center border-t border-brand-100 pt-6 relative z-10">
-					<span class="text-5xl font-extrabold text-gray-900 tracking-tight">35</span>
+					<span class="text-5xl font-extrabold text-gray-900 tracking-tight">39</span>
 					<span class="ml-1 text-sm font-bold text-brand-600">บาท / เดือน</span>
 				</div>
 				<div class="mt-8 flex justify-center relative z-10">

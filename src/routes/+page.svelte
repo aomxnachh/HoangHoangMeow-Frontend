@@ -17,13 +17,42 @@
 	let ads = $state<Array<{ id: number; title: string; content: string; imageUrl?: string; targetUrl?: string }>>([]);
 	let userPlanType = $state<'FREE' | 'PREMIUM'>('FREE');
 
+	const chartTop = 14;
+	const chartBottom = 214;
+	const chartWidth = 1000;
+
+	function trendMaximum(items: Array<{ amount: number }>) {
+		return Math.max(1, ...items.map((item) => Math.max(0, Number(item.amount) || 0)));
+	}
+
+	function trendX(index: number, total: number) {
+		return total <= 1 ? chartWidth / 2 : (index / (total - 1)) * chartWidth;
+	}
+
+	function trendY(amount: number, maximum: number) {
+		return chartBottom - (Math.max(0, Number(amount) || 0) / maximum) * (chartBottom - chartTop);
+	}
+
+	function trendPoints(items: Array<{ amount: number }>, maximum: number) {
+		return items.map((item, index) => `${trendX(index, items.length)},${trendY(item.amount, maximum)}`).join(' ');
+	}
+
 	async function loadDashboard() {
 		try {
+			error = '';
 			const result = await api<any>('/api/dashboard');
 			pets = result.pets.map((pet: any) => ({ ...pet, id: String(pet.id), image: pet.image || '🐾', age: pet.age || '-', weight: pet.weight || '-', color: pet.color || '-', status: pet.status || 'ปกติ' }));
 			dashboardStats = { ...result.stats, thisMonthExpenses: result.stats.totalThisMonth };
-			expenseSummary = { totalThisMonth: result.stats.totalThisMonth, byCategory: result.byCategory, monthlyTrend: result.monthlyTrend };
-			upcomingEvents = result.upcoming.map((item: any) => ({ ...item, date: item.scheduledAt ? new Date(item.scheduledAt).toLocaleDateString('th-TH') : '-', color: 'bg-indigo-100 text-indigo-700' }));
+			expenseSummary = {
+				totalThisMonth: result.stats.totalThisMonth,
+				byCategory: result.byCategory || [],
+				monthlyTrend: result.monthlyTrend || []
+			};
+			upcomingEvents = (result.upcoming || []).map((item: any) => ({
+				...item,
+				date: item.scheduledAt ? new Date(item.scheduledAt).toLocaleDateString('th-TH') : '-',
+				color: 'bg-indigo-100 text-indigo-700'
+			}));
 			
 			if (userPlanType === 'FREE') {
 				try {
@@ -52,14 +81,14 @@
 
 <TopNav title={i18n.dashboard.title} subtitle={i18n.dashboard.subtitle} activeReminders={dashboardStats.activeReminders} />
 
-<div class="p-6 space-y-6">
+<div class="p-4 space-y-6 sm:p-6 lg:p-8">
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
 	
 	<!-- Welcome Banner -->
-	<div class="relative overflow-hidden rounded-3xl bg-mesh-banner p-8 text-white shadow-xl shadow-brand-500/20 animate-slide-in-right stagger-1">
+	<div class="relative overflow-hidden rounded-3xl bg-mesh-banner p-5 text-white shadow-xl shadow-brand-500/20 animate-slide-in-right stagger-1 sm:p-8">
 		<div class="relative z-10">
-			<h2 class="text-3xl font-extrabold tracking-tight drop-shadow-md">{i18n.dashboard.greeting(userName)} </h2>
-			<p class="mt-2 text-brand-100 font-medium text-lg drop-shadow">{i18n.dashboard.petsCount(dashboardStats.totalPets)}</p>
+			<h2 class="text-2xl font-extrabold tracking-tight drop-shadow-md sm:text-3xl">{i18n.dashboard.greeting(userName)} </h2>
+			<p class="mt-2 text-base font-medium text-brand-100 drop-shadow sm:text-lg">{i18n.dashboard.petsCount(dashboardStats.totalPets)}</p>
 		</div>
 		<div class="absolute -right-10 -top-10 opacity-20 transform rotate-12 pointer-events-none mix-blend-overlay">
 			<Icon name="pet" class="w-64 h-64 text-white" />
@@ -110,7 +139,7 @@
 					{i18n.dashboard.viewAll}
 				</a>
 			</div>
-			<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+			<div class="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
 				{#each pets as pet}
 					<PetCard {pet} />
 				{/each}
@@ -136,6 +165,11 @@
 						</div>
 					</div>
 				{/each}
+				{#if upcomingEvents.length === 0}
+					<div class="rounded-2xl border border-dashed border-gray-200 bg-white/50 p-6 text-center text-sm text-gray-400">
+						ยังไม่มีรายการแจ้งเตือนที่กำลังจะมาถึง
+					</div>
+				{/if}
 			</div>
 		</div>
 	</div>
@@ -143,7 +177,7 @@
 	<!-- Expense Summary -->
 	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2 animate-fade-up stagger-5 pb-8">
 		<!-- By Category -->
-		<div class="rounded-3xl glass-card p-6">
+		<div class="rounded-3xl glass-card p-5 sm:p-6">
 			<h2 class="text-xl font-extrabold text-gray-800">{i18n.dashboard.expensesByCategory}</h2>
 			<div class="mt-6 space-y-4">
 				{#each expenseSummary.byCategory as cat}
@@ -163,23 +197,72 @@
 			</div>
 		</div>
 
-		<!-- Monthly Trend (Simple Bar Chart) -->
-		<div class="rounded-3xl glass-card p-6">
+		<!-- Monthly Trend -->
+		<div class="rounded-3xl glass-card p-5 sm:p-6">
 			<h2 class="text-xl font-extrabold text-gray-800">{i18n.dashboard.monthlyTrend}</h2>
-			<div class="mt-8 flex h-48 items-end justify-between gap-3 px-2">
-				{#each expenseSummary.monthlyTrend as month}
-					<div class="group flex flex-1 flex-col items-center gap-2">
-						<span class="text-xs font-bold text-gray-400 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:-translate-y-1">
-							{(month.amount / 1000).toFixed(1)}k
-						</span>
-						<div
-							class="w-full rounded-t-xl bg-gray-200 transition-all duration-500 group-hover:bg-gradient-to-t group-hover:from-brand-500 group-hover:to-brand-400 shadow-sm"
-							style="height: {(month.amount / 12000) * 100}%"
-						></div>
-						<span class="text-xs font-medium text-gray-500 group-hover:text-brand-600 transition-colors">{month.month}</span>
+			{#if expenseSummary.monthlyTrend.length > 0}
+				{@const maximum = trendMaximum(expenseSummary.monthlyTrend)}
+				<div class="mt-6">
+					<div class="h-48 sm:h-56">
+						<svg
+							class="h-full w-full overflow-visible"
+							viewBox="0 0 1000 228"
+							preserveAspectRatio="none"
+							role="img"
+							aria-label="กราฟแนวโน้มค่าใช้จ่ายรายเดือน"
+						>
+							<defs>
+								<linearGradient id="monthlyTrendFill" x1="0" x2="0" y1="0" y2="1">
+									<stop offset="0%" stop-color="#ef4444" stop-opacity="0.28" />
+									<stop offset="100%" stop-color="#ef4444" stop-opacity="0.02" />
+								</linearGradient>
+							</defs>
+
+							{#each [14, 64, 114, 164, 214] as y}
+								<line x1="0" x2="1000" y1={y} y2={y} stroke="#e5e7eb" stroke-dasharray="6 8" />
+							{/each}
+
+							<polygon
+								points="{trendPoints(expenseSummary.monthlyTrend, maximum)} 1000,{chartBottom} 0,{chartBottom}"
+								fill="url(#monthlyTrendFill)"
+							/>
+							<polyline
+								points={trendPoints(expenseSummary.monthlyTrend, maximum)}
+								fill="none"
+								stroke="#ef4444"
+								stroke-width="8"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+
+							{#each expenseSummary.monthlyTrend as month, index}
+								<circle
+									cx={trendX(index, expenseSummary.monthlyTrend.length)}
+									cy={trendY(month.amount, maximum)}
+									r="9"
+									fill="white"
+									stroke="#ef4444"
+									stroke-width="6"
+								>
+									<title>{month.month}: ฿{Number(month.amount).toLocaleString('th-TH')}</title>
+								</circle>
+							{/each}
+						</svg>
 					</div>
-				{/each}
-			</div>
+					<div
+						class="mt-3 grid gap-1"
+						style="grid-template-columns: repeat({expenseSummary.monthlyTrend.length}, minmax(0, 1fr));"
+					>
+						{#each expenseSummary.monthlyTrend as month}
+							<span class="truncate text-center text-xs font-medium text-gray-500">{month.month}</span>
+						{/each}
+					</div>
+				</div>
+			{:else}
+				<div class="mt-6 flex h-56 items-center justify-center rounded-2xl bg-gray-50 text-sm text-gray-400">
+					ยังไม่มีข้อมูลค่าใช้จ่ายรายเดือน
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>

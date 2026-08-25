@@ -5,6 +5,7 @@
 	import { getSession, api, request, ApiError } from '$lib/api';
 
 	let recommendations = $state<Array<any>>([]);
+	let categories = $state<Array<{ id: number; species: string }>>([]);
 	let loading = $state(true);
 	let error = $state('');
 
@@ -13,7 +14,7 @@
 	let editingId = $state<number | null>(null);
 
 	let formData = $state({
-		petCategoryId: 1,
+		petCategoryId: '' as number | '',
 		ageRange: 'ALL',
 		content: ''
 	});
@@ -21,8 +22,12 @@
 	async function loadRecommendations() {
 		loading = true; error = '';
 		try {
-			const result = await api<{ recommendations: any[] }>('/api/admin/recommendations');
-			recommendations = result.recommendations || [];
+			const [recsResult, categoriesResult] = await Promise.all([
+				api<{ recommendations: any[] }>('/api/admin/recommendations'),
+				api<{ categories: Array<{ id: number; species: string }> }>('/api/admin/pet-species')
+			]);
+			recommendations = recsResult.recommendations || [];
+			categories = categoriesResult.categories || [];
 		} catch (err) {
 			error = err instanceof ApiError ? err.message : 'ไม่สามารถโหลดคำแนะนำได้';
 		} finally {
@@ -41,14 +46,14 @@
 
 	function openAddModal() {
 		editingId = null;
-		formData = { petCategoryId: 1, ageRange: 'ALL', content: '' };
+		formData = { petCategoryId: '', ageRange: 'ALL', content: '' };
 		showModal = true;
 	}
 
 	function openEditModal(rec: any) {
 		editingId = rec.id;
 		formData = {
-			petCategoryId: rec.petCategoryId || 1,
+			petCategoryId: rec.petCategoryId ?? '',
 			ageRange: rec.ageRange || 'ALL',
 			content: rec.content
 		};
@@ -60,7 +65,7 @@
 		try {
 			const body = {
 				...formData,
-				petCategoryId: Number(formData.petCategoryId)
+				petCategoryId: formData.petCategoryId === '' ? null : Number(formData.petCategoryId)
 			};
 			
 			if (editingId) {
@@ -94,8 +99,8 @@
 
 <TopNav title="จัดการคำแนะนำ" subtitle="เพิ่ม ลบ แก้ไข คำแนะนำในการดูแลสัตว์เลี้ยง" />
 
-<div class="p-6 space-y-6 animate-fade-in stagger-1">
-	<div class="flex items-center justify-between">
+<div class="p-4 space-y-6 animate-fade-in stagger-1 sm:p-6 lg:p-8">
+	<div class="flex flex-wrap items-center justify-between gap-3">
 		<h2 class="text-lg font-bold text-gray-800">รายการคำแนะนำ</h2>
 		<button
 			onclick={openAddModal}
@@ -126,10 +131,10 @@
 					</thead>
 					<tbody class="divide-y divide-gray-200">
 						{#each recommendations as rec}
-							<tr class="hover:bg-gray-50">
-								<td class="px-4 py-3 text-xs">{rec.id}</td>
-								<td class="px-4 py-3">{rec.petCategoryId}</td>
-								<td class="px-4 py-3">{rec.ageRange}</td>
+								<tr class="hover:bg-gray-50">
+									<td class="px-4 py-3 text-xs">{rec.id}</td>
+									<td class="px-4 py-3">{rec.species || 'ทุกประเภท'}</td>
+									<td class="px-4 py-3">{rec.ageRange}</td>
 								<td class="px-4 py-3 max-w-[300px] truncate">{rec.content}</td>
 								<td class="px-4 py-3 text-right space-x-2">
 									<button onclick={() => openEditModal(rec)} class="text-brand-600 hover:text-brand-900">แก้ไข</button>
@@ -148,17 +153,22 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md"
+		class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md"
 		onclick={(e) => { if (e.target === e.currentTarget) showModal = false; }}
 	>
-		<div class="mx-4 w-full max-w-lg rounded-3xl glass-heavy p-8 shadow-2xl">
+		<div class="my-auto w-full max-w-lg rounded-3xl glass-heavy p-5 shadow-2xl sm:p-8">
 			<h2 class="text-lg font-bold text-gray-800 mb-6">{editingId ? 'แก้ไขคำแนะนำ' : 'เพิ่มคำแนะนำ'}</h2>
 
 			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); saveRecommendation(); }}>
-				<div class="grid grid-cols-2 gap-4">
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<div>
-						<label class="mb-1 block text-sm font-medium text-gray-700">หมวดหมู่สัตว์เลี้ยง (ID) *</label>
-						<input type="number" required bind:value={formData.petCategoryId} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
+						<label class="mb-1 block text-sm font-medium text-gray-700">หมวดหมู่สัตว์เลี้ยง *</label>
+						<select bind:value={formData.petCategoryId} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
+							<option value="">ทุกประเภทสัตว์เลี้ยง</option>
+							{#each categories as category}
+								<option value={category.id}>{category.species}</option>
+							{/each}
+						</select>
 					</div>
 					<div>
 						<label class="mb-1 block text-sm font-medium text-gray-700">ช่วงอายุ *</label>

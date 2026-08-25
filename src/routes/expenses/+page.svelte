@@ -92,10 +92,10 @@
 
 <TopNav title="ค่าใช้จ่าย" subtitle="ติดตามค่าใช้จ่ายในการดูแลสัตว์เลี้ยง" />
 
-<div class="p-6 space-y-6 animate-fade-in stagger-1">
-	<div class="flex justify-between items-center">
+<div class="p-4 space-y-6 animate-fade-in stagger-1 sm:p-6 lg:p-8">
+	<div class="flex items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold text-gray-800 hidden sm:block">ค่าใช้จ่าย</h1>
-		<button onclick={openModal} class="ml-auto relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group">
+		<button onclick={openModal} class="relative ml-auto whitespace-nowrap overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group sm:px-6">
 			+ เพิ่มรายจ่าย
 		</button>
 	</div>
@@ -289,8 +289,8 @@
 </div>
 
 {#if showAddModal}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4 animate-fade-in">
-		<div class="w-full max-w-md rounded-3xl glass-heavy p-8 shadow-xl">
+	<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md animate-fade-in">
+		<div class="my-auto w-full max-w-md rounded-3xl glass-heavy p-5 shadow-xl sm:p-8">
 			<h2 class="text-xl font-bold text-gray-800 mb-4">เพิ่มรายจ่าย</h2>
 			<form onsubmit={(e) => { e.preventDefault(); handleAdd(); }} class="space-y-4">
 				<div>
@@ -321,7 +321,7 @@
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="amount">จำนวนเงิน (บาท)</label>
 					<input type="number" id="amount" bind:value={formData.amount} min="0" required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white text-gray-700" />
 				</div>
-				<div class="mt-6 flex justify-end gap-3">
+				<div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 					<button type="button" onclick={() => showAddModal = false} class="rounded-2xl border-2 border-gray-200 px-6 py-3 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all hover:-translate-y-0.5">
 						ยกเลิก
 					</button>

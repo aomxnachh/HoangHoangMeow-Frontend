@@ -16,7 +16,9 @@
 	let formData = $state({
 		petCategoryId: '' as number | '',
 		ageRange: 'ALL',
-		content: ''
+		title: '',
+		content: '',
+		imageUrl: ''
 	});
 
 	async function loadRecommendations() {
@@ -46,7 +48,7 @@
 
 	function openAddModal() {
 		editingId = null;
-		formData = { petCategoryId: '', ageRange: 'ALL', content: '' };
+		formData = { petCategoryId: '', ageRange: 'ALL', title: '', content: '', imageUrl: '' };
 		showModal = true;
 	}
 
@@ -55,7 +57,9 @@
 		formData = {
 			petCategoryId: rec.petCategoryId ?? '',
 			ageRange: rec.ageRange || 'ALL',
-			content: rec.content
+			title: rec.title || '',
+			content: rec.content,
+			imageUrl: rec.imageUrl || ''
 		};
 		showModal = true;
 	}
@@ -123,6 +127,8 @@
 					<thead class="bg-gray-50 text-xs font-medium text-gray-500 uppercase">
 						<tr>
 							<th class="px-4 py-3">ID</th>
+							<th class="px-4 py-3">รูป</th>
+							<th class="px-4 py-3">ชื่อโพสต์</th>
 							<th class="px-4 py-3">หมวดหมู่สัตว์เลี้ยง</th>
 							<th class="px-4 py-3">ช่วงอายุ</th>
 							<th class="px-4 py-3">เนื้อหา</th>
@@ -133,6 +139,14 @@
 						{#each recommendations as rec}
 								<tr class="hover:bg-gray-50">
 									<td class="px-4 py-3 text-xs">{rec.id}</td>
+									<td class="px-4 py-3">
+										{#if rec.imageUrl}
+											<img src={rec.imageUrl} alt="" class="h-10 w-10 rounded-lg object-cover" />
+										{:else}
+											<span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-400 text-lg">📷</span>
+										{/if}
+									</td>
+									<td class="px-4 py-3 font-medium">{rec.title || '-'}</td>
 									<td class="px-4 py-3">{rec.species || 'ทุกประเภท'}</td>
 									<td class="px-4 py-3">{rec.ageRange}</td>
 								<td class="px-4 py-3 max-w-[300px] truncate">{rec.content}</td>
@@ -179,6 +193,21 @@
 							<option value="SENIOR">สูงวัย</option>
 						</select>
 					</div>
+				</div>
+
+				<div>
+					<label class="mb-1 block text-sm font-medium text-gray-700">ชื่อโพสต์</label>
+					<input type="text" bind:value={formData.title} placeholder="เช่น วิธีดูแลลูกแมวแรกเกิด" class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
+				</div>
+
+				<div>
+					<label class="mb-1 block text-sm font-medium text-gray-700">URL รูปภาพ</label>
+					<input type="url" bind:value={formData.imageUrl} placeholder="https://example.com/image.jpg" class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
+					{#if formData.imageUrl}
+						<div class="mt-2 overflow-hidden rounded-xl border border-gray-200">
+							<img src={formData.imageUrl} alt="Preview" class="h-32 w-full object-cover" onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+						</div>
+					{/if}
 				</div>
 				
 				<div>

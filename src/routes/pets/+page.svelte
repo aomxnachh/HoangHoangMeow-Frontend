@@ -63,7 +63,7 @@
 </script>
 
 <svelte:head>
-	<title>{i18n.pets.title} | PetCare</title>
+	<title>{i18n.pets.title} | HoangHoang Meow</title>
 </svelte:head>
 
 <TopNav title={i18n.pets.title} subtitle={i18n.pets.subtitle} />

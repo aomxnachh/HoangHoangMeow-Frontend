@@ -89,14 +89,14 @@
 			const [petResult, planResult, recommendationResult] = await Promise.all([api<{ pets: any[] }>('/api/pets'), api<{ plans: any[] }>('/api/care-plans'), api<{ recommendations: any[] }>('/api/care-recommendations')]);
 			pets = petResult.pets.map((pet) => ({ ...pet, id: String(pet.id), image: pet.image || '🐾' }));
 			carePlans = planResult.plans.map((plan) => ({ ...plan, id: String(plan.id), petId: String(plan.petId), frequency: plan.frequencyDays ? `ทุก ${plan.frequencyDays} วัน` : 'กำหนดเอง', nextDate: plan.nextDueAt ? new Date(plan.nextDueAt).toLocaleDateString('th-TH') : '-', status: plan.status === 'DONE' ? 'completed' : 'upcoming', items: plan.detail ? plan.detail.split('\n').filter(Boolean) : [] }));
-			careRecommendations = recommendationResult.recommendations.map((item) => ({ ...item, id: String(item.id), petId: String(item.petId), type: item.ageRange, title: item.title || `คำแนะนำการดูแลสำหรับ ${item.petName}`, description: item.content, imageUrl: item.imageUrl || '', priority: 'low', dueDate: '-' }));
+			careRecommendations = recommendationResult.recommendations.map((item) => ({ ...item, id: String(item.id), petId: item.petId != null ? String(item.petId) : '', type: item.ageRange, title: item.title || `คำแนะนำการดูแลสำหรับ ${item.petName}`, description: item.content, imageUrl: item.imageUrl || '', priority: 'low', dueDate: '-' }));
 		} catch (err) { error = err instanceof ApiError ? err.message : 'ไม่สามารถโหลดแผนดูแลได้'; }
 	}
 	onMount(loadCare);
 </script>
 
 <svelte:head>
-	<title>{i18n.care.title} | PetCare</title>
+	<title>{i18n.care.title} | HoangHoang Meow</title>
 </svelte:head>
 
 <TopNav title={i18n.care.title} subtitle={i18n.care.subtitle} />
@@ -245,7 +245,7 @@
 					<div class="p-4">
 						<div class="mb-2 flex items-center gap-2">
 							<span class="text-lg">{pet?.image || '🐾'}</span>
-							<span class="text-xs text-gray-400">{pet?.name}</span>
+							<span class="text-xs text-gray-400">{pet?.name || rec.petName}</span>
 						</div>
 						<h3 class="text-sm font-bold text-gray-800 line-clamp-1 transition-colors duration-200 group-hover:text-brand-600">
 							{rec.title}
@@ -323,7 +323,7 @@
 			<div class="p-6">
 				<div class="mb-3 flex items-center gap-2">
 					<span class="text-2xl">{pet?.image || '🐾'}</span>
-					<span class="text-sm text-gray-500">สำหรับ {pet?.name || 'สัตว์เลี้ยง'}</span>
+					<span class="text-sm text-gray-500">สำหรับ {pet?.name || selectedRec.petName || 'สัตว์เลี้ยง'}</span>
 				</div>
 				<h2 class="text-lg font-bold text-gray-800">{selectedRec.title}</h2>
 				<div class="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-gray-600">

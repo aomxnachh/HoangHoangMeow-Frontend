@@ -74,7 +74,7 @@
 </script>
 
 <svelte:head>
-	<title>จัดการผู้ใช้ | PetCare Admin</title>
+	<title>จัดการผู้ใช้ | HoangHoang Meow Admin</title>
 </svelte:head>
 
 <TopNav title="จัดการผู้ใช้" subtitle="ดูและจัดการบัญชีผู้ใช้ทั้งหมด" />

@@ -45,7 +45,7 @@
 </script>
 
 <svelte:head>
-	<title>อัปเกรดแพ็กเกจ | PetCare</title>
+	<title>อัปเกรดแพ็กเกจ | HoangHoang Meow</title>
 </svelte:head>
 
 <TopNav title="อัปเกรดเป็น Premium" subtitle="ปลดล็อกเครื่องมือดูแลสัตว์เลี้ยงแบบครบชุด" />

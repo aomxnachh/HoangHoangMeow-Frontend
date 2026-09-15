@@ -62,7 +62,7 @@
 </script>
 
 <svelte:head>
-	<title>การชำระเงินและแพ็กเกจ | PetCare</title>
+	<title>การชำระเงินและแพ็กเกจ | HoangHoang Meow</title>
 </svelte:head>
 
 <TopNav title="การชำระเงินและแพ็กเกจ" subtitle="จัดการแพ็กเกจและประวัติการชำระเงิน" />

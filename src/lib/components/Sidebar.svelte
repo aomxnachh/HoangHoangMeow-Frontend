@@ -69,17 +69,11 @@
 >
 	<!-- Logo / Brand -->
 	<div class="flex h-16 items-center gap-3 border-b border-gray-100 px-4">
-		<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/30 transition-transform duration-300 hover:scale-105">
-			<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-				/>
-			</svg>
+		<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 shadow-sm ring-1 ring-brand-100 transition-transform duration-300 hover:scale-105">
+			<img src="/hoanghoangmeow-logo.png" alt="HoangHoang Meow" class="h-10 w-10 object-contain" />
 		</div>
 		{#if expanded}
-			<span class="text-lg font-bold text-gray-800 whitespace-nowrap">PetCare</span>
+			<span class="text-lg font-bold text-gray-800 whitespace-nowrap">HoangHoang <span class="text-brand-600">Meow</span></span>
 		{/if}
 	</div>
 

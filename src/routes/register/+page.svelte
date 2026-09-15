@@ -37,7 +37,7 @@
 		<!-- Left: Visual/Brand Section (Hidden on mobile) -->
 		<section class="relative hidden p-0 lg:block overflow-hidden bg-brand-50/50">
 			<!-- User uploaded image as background -->
-			<img src="/register-bg.png" alt="PetCare Friends" class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
+			<img src="/register-bg.png" alt="HoangHoang Meow Friends" class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
 			
 			<!-- Gradient overlay to make text readable -->
 			<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
@@ -51,18 +51,12 @@
 		<!-- Right: Form Section -->
 		<section class="flex flex-col justify-center p-8 sm:p-12 xl:p-16 relative">
 			<a href="/" class="group flex items-center gap-4 transition-transform hover:-translate-y-1 w-fit lg:hidden">
-				<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-500/30">
-					<svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M12 2C7 2 3 4.2 3 7v2c0 2.8 4 5 9 5s9-2.2 9-5V7c0-2.8-4-5-9-5z" />
-						<circle cx="12" cy="18" r="4" />
-						<circle cx="12" cy="16.5" r="0.5" fill="currentColor" />
-						<circle cx="10.5" cy="17.5" r="0.5" fill="currentColor" />
-						<circle cx="13.5" cy="17.5" r="0.5" fill="currentColor" />
-					</svg>
+				<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-lg shadow-brand-500/20 ring-1 ring-brand-100">
+					<img src="/hoanghoangmeow-logo.png" alt="HoangHoang Meow" class="h-12 w-12 object-contain" />
 				</div>
 				<div>
-					<p class="text-lg font-extrabold leading-tight text-gray-900 tracking-tight">PetCare</p>
-					<p class="text-lg font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-rose-400 tracking-tight">Dashboard</p>
+					<p class="text-lg font-extrabold leading-tight text-gray-900 tracking-tight">HoangHoang</p>
+					<p class="text-lg font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-rose-400 tracking-tight">Meow</p>
 				</div>
 			</a>
 

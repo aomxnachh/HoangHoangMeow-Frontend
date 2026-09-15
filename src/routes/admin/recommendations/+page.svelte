@@ -98,7 +98,7 @@
 </script>
 
 <svelte:head>
-	<title>จัดการคำแนะนำ | PetCare Admin</title>
+	<title>จัดการคำแนะนำ | HoangHoang Meow Admin</title>
 </svelte:head>
 
 <TopNav title="จัดการคำแนะนำ" subtitle="เพิ่ม ลบ แก้ไข คำแนะนำในการดูแลสัตว์เลี้ยง" />

@@ -48,7 +48,7 @@
 </script>
 
 <svelte:head>
-	<title>ตรวจสอบการชำระเงิน | PetCare</title>
+	<title>ตรวจสอบการชำระเงิน | HoangHoang Meow</title>
 </svelte:head>
 
 <TopNav title="ตรวจสอบการชำระเงิน" subtitle="ผลลัพธ์การชำระเงินของคุณ" />

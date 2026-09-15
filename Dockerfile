@@ -7,6 +7,14 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+
+# รับค่า URL ของ Backend มาจากตอนรันคำสั่ง docker build
+
+ENV VITE_API_URL=https://backend-913381900876.asia-southeast1.run.app
+
+# ตั้งค่า Google Client ID สำหรับ Frontend (Public Variable)
+ENV PUBLIC_GOOGLE_CLIENT_ID=1009925762161-bje0jk7iqks97bhddbes7sq2vtemh6bg.apps.googleusercontent.com
+
 RUN npm run build
 
 # ---- Run stage ----

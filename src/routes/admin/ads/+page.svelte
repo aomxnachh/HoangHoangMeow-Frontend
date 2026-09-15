@@ -100,7 +100,7 @@
 </script>
 
 <svelte:head>
-	<title>จัดการโฆษณา | PetCare Admin</title>
+	<title>จัดการโฆษณา | HoangHoang Meow Admin</title>
 </svelte:head>
 
 <TopNav title="จัดการโฆษณา" subtitle="เพิ่ม ลบ แก้ไข โฆษณาสำหรับผู้ใช้ฟรี" />

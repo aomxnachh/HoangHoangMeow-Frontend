@@ -76,7 +76,7 @@
 </script>
 
 <svelte:head>
-	<title>{i18n.dashboard.title} | PetCare</title>
+	<title>{i18n.dashboard.title} | HoangHoang Meow</title>
 </svelte:head>
 
 <TopNav title={i18n.dashboard.title} subtitle={i18n.dashboard.subtitle} activeReminders={dashboardStats.activeReminders} />

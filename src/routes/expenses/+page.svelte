@@ -87,7 +87,7 @@
 </script>
 
 <svelte:head>
-	<title>ค่าใช้จ่าย | PetCare</title>
+	<title>ค่าใช้จ่าย | HoangHoang Meow</title>
 </svelte:head>
 
 <TopNav title="ค่าใช้จ่าย" subtitle="ติดตามค่าใช้จ่ายในการดูแลสัตว์เลี้ยง" />

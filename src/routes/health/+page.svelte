@@ -67,7 +67,7 @@
 </script>
 
 <svelte:head>
-	<title>บันทึกสุขภาพ | PetCare</title>
+	<title>บันทึกสุขภาพ | HoangHoang Meow</title>
 </svelte:head>
 
 <TopNav title="บันทึกสุขภาพ" subtitle="ประวัติการรักษาและตรวจสุขภาพสัตว์เลี้ยง" />

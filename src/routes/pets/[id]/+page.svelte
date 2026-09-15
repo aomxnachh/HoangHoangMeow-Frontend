@@ -119,7 +119,7 @@
 </script>
 
 <svelte:head>
-	<title>{pet.name} | PetCare</title>
+	<title>{pet.name} | HoangHoang Meow</title>
 </svelte:head>
 
 <TopNav title={pet.name} subtitle={pet.species + ' · ' + pet.breed} />

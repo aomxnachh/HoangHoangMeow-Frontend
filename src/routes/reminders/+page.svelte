@@ -95,7 +95,7 @@
 </script>
 
 <svelte:head>
-	<title>การแจ้งเตือน | PetCare</title>
+	<title>การแจ้งเตือน | HoangHoang Meow</title>
 </svelte:head>
 
 <TopNav title="การแจ้งเตือน" subtitle="จัดการนัดหมายและกิจวัตรของสัตว์เลี้ยง" />

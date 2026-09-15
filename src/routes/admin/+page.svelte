@@ -33,7 +33,7 @@
 </script>
 
 <svelte:head>
-	<title>แดชบอร์ด Admin | PetCare</title>
+	<title>แดชบอร์ด Admin | HoangHoang Meow</title>
 </svelte:head>
 
 <TopNav title="แดชบอร์ด Admin" subtitle="ภาพรวมระบบและการจัดการ" />

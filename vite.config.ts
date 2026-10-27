@@ -5,6 +5,10 @@ import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
+	server: {
+		// Docker Desktop bind mounts on Windows may not emit file change events.
+		watch: { usePolling: process.env.CHOKIDAR_USEPOLLING === 'true', interval: 1000 }
+	},
 	plugins: [
 		tailwindcss(),
 		sveltekit({

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { modal } from '$lib/actions/modal';
+	import PetPhoto from '$lib/components/PetPhoto.svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import TopNav from '$lib/components/TopNav.svelte';
@@ -7,12 +9,26 @@
 	import type { Pet } from '$lib/data/mock-data';
 	import { ApiError, api } from '$lib/api';
 	import { i18n } from '$lib/i18n';
+	import { petErrors, localDate } from '$lib/validation';
+	let attempted = $state(false);
 
 	let pets = $state<Pet[]>([]);
 	let loading = $state(true);
 	let error = $state('');
 	let saving = $state(false);
-	let newPet = $state({ name: '', species: 'แมว', breed: '', gender: 'UNKNOWN', birthdate: '', weight: '', color: '', allergies: '', notes: '' });
+	let photoBusy = $state(false);
+	let newPet = $state({ name: '', species: 'แมว', breed: '', avatarUrl: '', gender: '', birthdate: '', weight: '', color: '', allergies: '', notes: '' });
+	let validationErrors = $derived(petErrors(newPet));
+
+	// --- Special character validation ---
+	const specialCharRegex = /[!@#$%^&*()_+=\[\]{};':"\\|,.<>\/?`~]/;
+	function hasSpecialChars(value: string): boolean {
+		return specialCharRegex.test(value);
+	}
+	let nameError = $derived(attempted || newPet.name ? validationErrors.name || '' : '');
+	let breedError = $derived(validationErrors.breed || '');
+	let colorError = $derived(validationErrors.color || '');
+	let petFormValid = $derived(!nameError && !breedError && !colorError);
 
 	let searchQuery = $state('');
 	let filterSpecies = $state('ทั้งหมด');
@@ -23,7 +39,7 @@
 		pets.filter((p) => {
 			const matchesSearch =
 				p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				p.breed.toLowerCase().includes(searchQuery.toLowerCase());
+				(p.breed || '').toLowerCase().includes(searchQuery.toLowerCase());
 			const matchesSpecies = filterSpecies === 'ทั้งหมด' || p.species === filterSpecies;
 			return matchesSearch && matchesSpecies;
 		})
@@ -42,11 +58,15 @@
 	}
 
 	async function addPet() {
+		attempted = true;
+		if (Object.keys(validationErrors).length) { error = Object.values(validationErrors)[0]; return; }
+		if (['breed', 'color', 'allergies', 'notes'].some((key) => !String(newPet[key as keyof typeof newPet]).trim()) && !confirm('ยังทำการกรอกข้อมูลไม่ครบถ้วน สามารถแก้ไขภายหลังได้ในการแก้ไขโปรไฟล์')) return;
 		saving = true; error = '';
 		try {
 			await api('/api/pets', { method: 'POST', body: JSON.stringify({ ...newPet, weight: newPet.weight || undefined }) });
 			showAddModal = false;
-			newPet = { name: '', species: 'แมว', breed: '', gender: 'UNKNOWN', birthdate: '', weight: '', color: '', allergies: '', notes: '' };
+			attempted = false;
+			newPet = { name: '', species: 'แมว', breed: '', avatarUrl: '', gender: '', birthdate: '', weight: '', color: '', allergies: '', notes: '' };
 			await loadPets();
 		} catch (err) {
 			if (err instanceof ApiError && err.code === 'PET_LIMIT_REACHED') {
@@ -109,6 +129,7 @@
 		<!-- Add Pet Button -->
 		<button
 			onclick={() => (showAddModal = true)}
+			disabled={loading}
 			class="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 sm:w-auto"
 		>
 			<span class="relative z-10 flex items-center gap-2">
@@ -124,7 +145,7 @@
 	<!-- Pet Grid -->
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
 	{#if loading}<p class="py-12 text-center text-sm text-gray-500">กำลังโหลดข้อมูล…</p>{/if}
-	<div class="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+	<div class="pet-grid gap-4">
 		{#each filteredPets as pet (pet.id)}
 			<PetCard {pet} />
 		{/each}
@@ -141,7 +162,7 @@
 	{#if showAddModal}
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
-			class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4 transition-all"
+			use:modal class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4 transition-all"
 			onclick={(e) => { if (e.target === e.currentTarget) showAddModal = false; }}
 			onkeydown={(e) => { if (e.key === 'Escape') showAddModal = false; }}
 			role="button"
@@ -164,7 +185,8 @@
 					</button>
 				</div>
 
-				<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); addPet(); }}>
+				{#if error}<p role="alert" class="mb-4 text-sm text-red-600">{error}</p>{/if}
+				<form novalidate class="space-y-4" onsubmit={(e) => { e.preventDefault(); addPet(); }}>
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label for="pet-name" class="mb-1 block text-sm font-medium text-gray-700">ชื่อ</label>
@@ -174,8 +196,9 @@
 								required
 								bind:value={newPet.name}
 								placeholder="เช่น โมจิ"
-								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
+								class="w-full rounded-2xl border-2 {nameError ? 'border-red-400 focus:border-red-400 focus:ring-red-100/50' : 'border-transparent focus:border-brand-400 focus:ring-brand-100/50'} bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:bg-white hover:bg-white"
 							/>
+							{#if nameError}<p class="mt-1 text-xs text-red-500">{nameError}</p>{/if}
 						</div>
 						<div>
 							<label for="pet-species" class="mb-1.5 block text-sm font-bold text-gray-700">ชนิด</label>
@@ -194,13 +217,15 @@
 								type="text"
 								bind:value={newPet.breed}
 								placeholder="เช่น สก็อตติชโฟลด์"
-								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
+								class="w-full rounded-2xl border-2 {breedError ? 'border-red-400 focus:border-red-400 focus:ring-red-100/50' : 'border-transparent focus:border-brand-400 focus:ring-brand-100/50'} bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:bg-white hover:bg-white"
 							/>
+							{#if breedError}<p class="mt-1 text-xs text-red-500">{breedError}</p>{/if}
 						</div>
 						<div>
+							{#if attempted && validationErrors.gender}<p class="text-sm text-red-600">{validationErrors.gender}</p>{/if}
 							<label for="pet-gender" class="mb-1.5 block text-sm font-bold text-gray-700">เพศ</label>
 							<select id="pet-gender" bind:value={newPet.gender} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
-								<option value="UNKNOWN">ไม่ระบุ</option>
+								<option value="">เลือกเพศ</option><option value="UNKNOWN">ไม่ระบุ</option>
 								<option value="MALE">เพศผู้</option>
 								<option value="FEMALE">เพศเมีย</option>
 							</select>
@@ -211,23 +236,27 @@
 						<div>
 							<label for="pet-age" class="mb-1.5 block text-sm font-bold text-gray-700">อายุ (วันเกิด)</label>
 							<input
-								id="pet-age"
+								id="pet-age" required max={localDate()}
 								type="date"
 								bind:value={newPet.birthdate}
-								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
+								class="w-full rounded-2xl border-2 {(attempted || newPet.birthdate) && validationErrors.birthdate ? 'border-red-400' : 'border-transparent'} bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 							/>
-						</div>
+
+{#if (attempted || newPet.birthdate) && validationErrors.birthdate}<p class="mt-1 text-xs text-red-500">{validationErrors.birthdate}</p>{/if}
+</div>
 						<div>
 							<label for="pet-weight" class="mb-1.5 block text-sm font-bold text-gray-700">น้ำหนัก</label>
 							<input
-								id="pet-weight"
+								id="pet-weight" required min="0.01" max="9999.99"
 								type="number"
 								step="0.01"
 								bind:value={newPet.weight}
 								placeholder="เช่น 3.5 กก."
-								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
+								class="w-full rounded-2xl border-2 {(attempted || newPet.weight) && validationErrors.weight ? 'border-red-400' : 'border-transparent'} bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 							/>
-						</div>
+
+{#if (attempted || newPet.weight) && validationErrors.weight}<p class="mt-1 text-xs text-red-500">{validationErrors.weight}</p>{/if}
+</div>
 					</div>
 
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -238,8 +267,9 @@
 								type="text"
 								bind:value={newPet.color}
 								placeholder="เช่น ส้ม"
-								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
+								class="w-full rounded-2xl border-2 {colorError ? 'border-red-400 focus:border-red-400 focus:ring-red-100/50' : 'border-transparent focus:border-brand-400 focus:ring-brand-100/50'} bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:bg-white hover:bg-white"
 							/>
+							{#if colorError}<p class="mt-1 text-xs text-red-500">{colorError}</p>{/if}
 						</div>
 						<div>
 							<label for="pet-allergies" class="mb-1.5 block text-sm font-bold text-gray-700">ข้อมูลการแพ้</label>
@@ -248,9 +278,11 @@
 								bind:value={newPet.allergies}
 								placeholder="เช่น แพ้ยา..."
 								rows="1"
-								class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
+								class="w-full rounded-2xl border-2 {(attempted || newPet.allergies) && validationErrors.allergies ? 'border-red-400' : 'border-transparent'} bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 							></textarea>
-						</div>
+
+{#if (attempted || newPet.allergies) && validationErrors.allergies}<p class="mt-1 text-xs text-red-500">{validationErrors.allergies}</p>{/if}
+</div>
 					</div>
 
 					<div>
@@ -260,10 +292,13 @@
 							bind:value={newPet.notes}
 							placeholder="ข้อมูลอื่นๆ ที่เป็นประโยชน์"
 							rows="2"
-							class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
+							class="w-full rounded-2xl border-2 {(attempted || newPet.notes) && validationErrors.notes ? 'border-red-400' : 'border-transparent'} bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"
 						></textarea>
-					</div>
 
+{#if (attempted || newPet.notes) && validationErrors.notes}<p class="mt-1 text-xs text-red-500">{validationErrors.notes}</p>{/if}
+</div>
+
+					<PetPhoto bind:value={newPet.avatarUrl} bind:busy={photoBusy} />
 					<div class="mt-6 flex flex-col-reverse gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
 						<button
 							type="button"
@@ -274,7 +309,7 @@
 						</button>
 						<button
 							type="submit"
-							disabled={saving}
+							disabled={saving || photoBusy}
 							class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-8 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 disabled:opacity-70 disabled:pointer-events-none group"
 						>
 							<span class="relative z-10">{saving ? 'กำลังบันทึก…' : 'บันทึก'}</span>
@@ -289,7 +324,7 @@
 	{#if showLimitPopup}
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
-			class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+			use:modal class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
 			onclick={(e) => { if (e.target === e.currentTarget) showLimitPopup = false; }}
 			onkeydown={(e) => { if (e.key === 'Escape') showLimitPopup = false; }}
 			role="button"

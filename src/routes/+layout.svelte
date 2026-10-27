@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { startNotifications } from '$lib/notifications';
+	import NotificationBanner from '$lib/components/NotificationBanner.svelte';
+	import { onMount } from 'svelte';
 	import { setContext } from 'svelte';
 	import './layout.css';
 	import Sidebar from '$lib/components/Sidebar.svelte';
@@ -23,6 +26,7 @@
 	}
 
 	setContext('toggleMobileMenu', toggleSidebar);
+	onMount(startNotifications);
 </script>
 
 <svelte:head>
@@ -53,6 +57,7 @@
 				: 'lg:ml-64'}"
 	>
 		<div class="animate-fade-in">
+            {#if !isAuthPage}<NotificationBanner />{/if}
 			{@render children()}
 		</div>
 	</main>

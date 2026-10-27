@@ -25,7 +25,7 @@
 
 	<!-- Pet Info -->
 	<h3 class="text-base font-semibold text-gray-800 transition-colors group-hover:text-brand-700 relative z-10">{pet.name}</h3>
-	<p class="text-sm text-gray-500 relative z-10">{pet.species} · {pet.breed}</p>
+	<p class="text-sm text-gray-500 relative z-10">{pet.species} · {pet.breed || '-'}</p>
 
 	<!-- Status badge -->
 	<span
@@ -33,6 +33,6 @@
 			? 'bg-green-100 text-green-700 border border-green-200/50'
 			: 'bg-amber-100 text-amber-700 border border-amber-200/50'}"
 	>
-		{pet.status}
+		{pet.readOnly ? 'ดูข้อมูลเท่านั้น' : 'ดูข้อมูลสัตว์เลี้ยง'}
 	</span>
 </a>

@@ -25,7 +25,7 @@
 	}
 
 	async function cancelSubscription() {
-		if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการต่ออายุอัตโนมัติ?')) return;
+		if (!confirm('ยืนยันเปลี่ยนเป็น Free ทันที? สัตว์เลี้ยงที่เกิน 3 ตัวจะดูข้อมูลได้อย่างเดียว')) return;
 		canceling = true;
 		error = '';
 		try {
@@ -119,6 +119,9 @@
 	</div>
 
 	<!-- Payment History Table -->
+	{#if payments.some(payment => payment.provider?.startsWith('DEMO_'))}
+		<p class="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">รายการที่ระบุ “จำลอง” เป็นการทดสอบอัปเกรดแพ็กเกจ ไม่มีการเรียกเก็บเงินจริง</p>
+	{/if}
 	<div class="rounded-3xl border border-white/60 bg-white/70 backdrop-blur-md overflow-hidden shadow-[0_8px_32px_0_rgba(226,50,50,0.05)] transition-all duration-300 hover:shadow-[0_16px_48px_0_rgba(226,50,50,0.1)] hover:-translate-y-1">
 		<div class="px-6 py-5 border-b border-gray-100 bg-white/50">
 			<h2 class="text-lg font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
@@ -137,13 +140,14 @@
 				<p class="text-base font-medium text-gray-500">ไม่มีประวัติการชำระเงิน</p>
 			</div>
 		{:else}
-			<div class="overflow-x-auto">
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users must be able to scroll this region.) -->
+			<div class="table-scroll" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนซ้ายขวาเพื่อดูเพิ่มเติม">
 				<table class="w-full text-left text-sm text-gray-600">
 					<thead class="bg-gray-50/50 text-xs font-bold text-gray-500 uppercase tracking-wider">
 						<tr>
 							<th class="px-6 py-4">วันที่</th>
 							<th class="px-6 py-4">จำนวนเงิน</th>
-							<th class="px-6 py-4">สถานะ</th>
+							<th class="px-6 py-4">ช่องทาง</th><th class="px-6 py-4">สถานะ</th>
 							<th class="px-6 py-4">อ้างอิง</th>
 							<th class="px-6 py-4">สิ้นสุดรอบบิล</th>
 						</tr>
@@ -153,7 +157,8 @@
 							<tr class="transition-colors hover:bg-white/80 group">
 								<td class="px-6 py-4.5 font-medium">{formatDate(payment.createdAt)}</td>
 								<td class="px-6 py-4.5 font-bold text-gray-900">฿{payment.amount.toLocaleString()}</td>
-								<td class="px-6 py-4.5">
+								<td class="px-6 py-4.5">{payment.provider === 'DEMO_CREDIT' ? 'เครดิต (จำลอง)' : payment.provider === 'DEMO_DEBIT' ? 'เดบิต (จำลอง)' : 'บัตร'}</td>
+                                <td class="px-6 py-4.5">
 									<span class="inline-flex rounded-full px-2.5 py-1 text-xs font-bold shadow-sm
 										{payment.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 
 										payment.status === 'FAILED' ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-gray-100 text-gray-700 border border-gray-200'}">

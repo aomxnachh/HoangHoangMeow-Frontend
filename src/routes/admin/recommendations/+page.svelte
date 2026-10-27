@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { modal } from '$lib/actions/modal';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import TopNav from '$lib/components/TopNav.svelte';
@@ -6,6 +7,9 @@
 
 	let recommendations = $state<Array<any>>([]);
 	let categories = $state<Array<{ id: number; species: string }>>([]);
+	let recommendationCategories = $derived(
+		categories.filter(category => ['หมา', 'แมว'].includes(category.species.trim()))
+	);
 	let loading = $state(true);
 	let error = $state('');
 
@@ -47,15 +51,18 @@
 	});
 
 	function openAddModal() {
+		error = '';
 		editingId = null;
 		formData = { petCategoryId: '', ageRange: 'ALL', title: '', content: '', imageUrl: '' };
 		showModal = true;
 	}
 
 	function openEditModal(rec: any) {
+		error = '';
 		editingId = rec.id;
 		formData = {
-			petCategoryId: rec.petCategoryId ?? '',
+			petCategoryId: rec.petCategoryId == null ? '' :
+				(recommendationCategories.find(category => category.species.trim() === rec.species?.trim())?.id ?? -1),
 			ageRange: rec.ageRange || 'ALL',
 			title: rec.title || '',
 			content: rec.content,
@@ -65,7 +72,13 @@
 	}
 
 	async function saveRecommendation() {
-		saving = true; error = '';
+		if (saving) return;
+		error = '';
+		if (formData.petCategoryId !== '' && !recommendationCategories.some(category => category.id === Number(formData.petCategoryId))) {
+			error = 'กรุณาเลือกหมา แมว หรือทุกประเภทสัตว์เลี้ยง';
+			return;
+		}
+		saving = true;
 		try {
 			const body = {
 				...formData,
@@ -122,7 +135,8 @@
 		{:else if recommendations.length === 0}
 			<p class="py-12 text-center text-sm text-gray-500">ไม่พบคำแนะนำ</p>
 		{:else}
-			<div class="overflow-x-auto">
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users must be able to scroll this region.) -->
+			<div class="table-scroll" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนซ้ายขวาเพื่อดูเพิ่มเติม">
 				<table class="w-full text-left text-sm text-gray-600">
 					<thead class="bg-gray-50 text-xs font-medium text-gray-500 uppercase">
 						<tr>
@@ -167,19 +181,23 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md"
+		use:modal class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md"
 		onclick={(e) => { if (e.target === e.currentTarget) showModal = false; }}
 	>
 		<div class="my-auto w-full max-w-lg rounded-3xl glass-heavy p-5 shadow-2xl sm:p-8">
 			<h2 class="text-lg font-bold text-gray-800 mb-6">{editingId ? 'แก้ไขคำแนะนำ' : 'เพิ่มคำแนะนำ'}</h2>
 
 			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); saveRecommendation(); }}>
+				{#if error}<p role="alert" class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<div>
 						<label class="mb-1 block text-sm font-medium text-gray-700">หมวดหมู่สัตว์เลี้ยง *</label>
 						<select bind:value={formData.petCategoryId} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
 							<option value="">ทุกประเภทสัตว์เลี้ยง</option>
-							{#each categories as category}
+							{#if formData.petCategoryId === -1}
+								<option value={-1} disabled>กรุณาเลือกประเภทสัตว์เลี้ยงใหม่</option>
+							{/if}
+							{#each recommendationCategories as category}
 								<option value={category.id}>{category.species}</option>
 							{/each}
 						</select>

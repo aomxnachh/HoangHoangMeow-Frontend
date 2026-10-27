@@ -41,9 +41,9 @@
 <div class="p-4 space-y-6 animate-fade-in stagger-1 sm:p-6 lg:p-8">
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
 
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 		<StatCard label="ผู้ใช้งานทั้งหมด" value={stats.users} icon="user" color="purple" />
-		<StatCard label="ผู้ใช้แบบฟรี" value={stats.freeUsers} icon="user" color="gray" />
+		<StatCard label="ผู้ใช้แบบฟรี" value={stats.freeUsers} icon="user" color="blue" />
 		<StatCard label="ผู้ใช้แบบ Premium" value={stats.premiumUsers} icon="crown" color="rose" />
 		<StatCard label="สัตว์เลี้ยงทั้งหมด" value={stats.pets} icon="paw" color="purple" />
 	</div>

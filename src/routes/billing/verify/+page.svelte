@@ -61,7 +61,7 @@
 			<p class="mt-2 text-sm text-gray-500">กรุณารอสักครู่</p>
 		</div>
 	{:else if status === 'SUCCESS'}
-		<div class="rounded-3xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-white/90 backdrop-blur-md p-8 sm:p-12 shadow-xl text-center">
+		<div class="rounded-3xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-white/90 backdrop-blur-md p-5 sm:p-12 shadow-xl text-center">
 			<div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-5xl mb-6 shadow-inner">
 				✅
 			</div>
@@ -70,15 +70,15 @@
 			
 			{#if paymentInfo}
 				<div class="mt-8 rounded-2xl bg-white/60 p-5 text-left space-y-3">
-					<div class="flex justify-between text-sm">
+					<div class="flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm">
 						<span class="text-gray-500">จำนวนเงิน</span>
 						<span class="font-bold text-gray-900">฿{Number(paymentInfo.amount).toLocaleString()}</span>
 					</div>
-					<div class="flex justify-between text-sm">
+					<div class="flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm">
 						<span class="text-gray-500">รหัสอ้างอิง</span>
 						<span class="font-mono text-xs text-gray-600">{paymentInfo.reference}</span>
 					</div>
-					<div class="flex justify-between text-sm">
+					<div class="flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm">
 						<span class="text-gray-500">สิ้นสุดรอบบิล</span>
 						<span class="font-medium text-gray-900">{formatDate(paymentInfo.periodEnd)}</span>
 					</div>
@@ -95,7 +95,7 @@
 			</div>
 		</div>
 	{:else if status === 'PENDING'}
-		<div class="rounded-3xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white/90 backdrop-blur-md p-8 sm:p-12 shadow-xl text-center">
+		<div class="rounded-3xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white/90 backdrop-blur-md p-5 sm:p-12 shadow-xl text-center">
 			<div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 text-5xl mb-6 shadow-inner animate-pulse">
 				⏳
 			</div>
@@ -113,7 +113,7 @@
 			</div>
 		</div>
 	{:else if status === 'FAILED'}
-		<div class="rounded-3xl border-2 border-red-200 bg-gradient-to-br from-red-50 to-white/90 backdrop-blur-md p-8 sm:p-12 shadow-xl text-center">
+		<div class="rounded-3xl border-2 border-red-200 bg-gradient-to-br from-red-50 to-white/90 backdrop-blur-md p-5 sm:p-12 shadow-xl text-center">
 			<div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-100 text-5xl mb-6 shadow-inner">
 				❌
 			</div>
@@ -130,7 +130,7 @@
 			</div>
 		</div>
 	{:else}
-		<div class="rounded-3xl glass-heavy border border-white/60 p-8 sm:p-12 shadow-xl text-center">
+		<div class="rounded-3xl glass-heavy border border-white/60 p-5 sm:p-12 shadow-xl text-center">
 			<div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 text-5xl mb-6 shadow-inner">
 				⚠️
 			</div>

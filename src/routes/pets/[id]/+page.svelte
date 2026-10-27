@@ -1,20 +1,34 @@
 <script lang="ts">
+	import { modal } from '$lib/actions/modal';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import TopNav from '$lib/components/TopNav.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import { pets as mockPets, healthRecords as mockHealthRecords, carePlans as mockCarePlans } from '$lib/data/mock-data';
+	import PetPhoto from '$lib/components/PetPhoto.svelte';
 	import { ApiError, api, request } from '$lib/api';
 	import { goto } from '$app/navigation';
+	import { petErrors, localDate } from '$lib/validation';
 
-	let pets = $state<any[]>(mockPets);
-	let healthRecords = $state<any[]>(mockHealthRecords);
-	let carePlans = $state<any[]>(mockCarePlans);
+	let pets = $state<any[]>([]);
+	let healthRecords = $state<any[]>([]);
+	let carePlans = $state<any[]>([]);
 	let error = $state('');
+	let loading = $state(true);
 	
 	let showEditModal = $state(false);
 	let savingEdit = $state(false);
+	let photoBusy = $state(false);
 	let editPetData = $state<any>({});
+
+	// --- Special character validation ---
+	const specialCharRegex = /[!@#$%^&*()_+=\[\]{};':"\\|,.<>\/?`~]/;
+	function hasSpecialChars(value: string): boolean {
+		return specialCharRegex.test(value || '');
+	}
+	let editNameError = $derived(hasSpecialChars(editPetData.name) ? 'ห้ามใช้อักขระพิเศษ เช่น @#$%^&*' : '');
+	let editBreedError = $derived(hasSpecialChars(editPetData.breed) ? 'ห้ามใช้อักขระพิเศษ เช่น @#$%^&*' : '');
+	let editColorError = $derived(hasSpecialChars(editPetData.color) ? 'ห้ามใช้อักขระพิเศษ เช่น @#$%^&*' : '');
+	let editFormValid = $derived(!editNameError && !editBreedError && !editColorError);
 	
 	let showDeleteModal = $state(false);
 	let deleting = $state(false);
@@ -29,9 +43,13 @@
 		provider: '',
 		cost: ''
 	});
+	let healthTitleError = $derived(hasSpecialChars(newHealthRecord.title) ? 'ห้ามใช้อักขระพิเศษ เช่น @#$%^&*' : '');
+	let healthDescError = $derived(hasSpecialChars(newHealthRecord.description) ? 'ห้ามใช้อักขระพิเศษ เช่น @#$%^&*' : '');
+	let healthProviderError = $derived(hasSpecialChars(newHealthRecord.provider) ? 'ห้ามใช้อักขระพิเศษ เช่น @#$%^&*' : '');
+	let healthFormValid = $derived(!healthTitleError && !healthDescError && !healthProviderError);
 
 	const petId = $derived($page.params.id);
-	let pet = $derived(pets.find((p) => p.id === petId) || pets[0]);
+	let pet = $derived(pets.find((p) => p.id === petId) || { id: '', name: '', species: '', breed: '', image: '', readOnly: true });
 	let petRecords = $derived(healthRecords.filter((r) => r.petId === pet.id));
 	let petCarePlans = $derived(carePlans.filter((c) => c.petId === pet.id));
 
@@ -46,20 +64,24 @@
 	async function loadPet() {
 		try {
 			const [petResult, recordResult, planResult] = await Promise.all([api<{ pet: any }>(`/api/pets/${petId}`), api<{ records: any[] }>(`/api/health-records?petId=${petId}`), api<{ plans: any[] }>('/api/care-plans')]);
-			const livePet = { ...petResult.pet, id: String(petResult.pet.id), image: petResult.pet.image || '🐾', age: petResult.pet.age || '-', weight: petResult.pet.weight ? `${petResult.pet.weight} กก.` : '-', color: petResult.pet.color || '-', status: 'ปกติ' };
+			const livePet = { ...petResult.pet, id: String(petResult.pet.id), image: petResult.pet.image || '🐾', age: petResult.pet.age || '-', weight: petResult.pet.weight ? `${petResult.pet.weight} กก.` : '-', color: petResult.pet.color || '-', status: 'บันทึกข้อมูลแล้ว' };
 			pets = [livePet];
 			healthRecords = recordResult.records.map((record) => ({ ...record, id: String(record.id), petId: String(record.petId), vet: record.provider || '-', cost: Number(record.cost || 0) }));
 			carePlans = planResult.plans.filter((plan) => String(plan.petId) === String(petId)).map((plan) => ({ ...plan, id: String(plan.id), petId: String(plan.petId), frequency: plan.frequencyDays ? `ทุก ${plan.frequencyDays} วัน` : 'กำหนดเอง', nextDate: plan.nextDueAt ? new Date(plan.nextDueAt).toLocaleDateString('th-TH') : '-', status: plan.status === 'DONE' ? 'completed' : 'upcoming', items: plan.detail ? plan.detail.split('\n') : [] }));
 		} catch (err) { error = err instanceof ApiError ? err.message : 'ไม่สามารถโหลดข้อมูลสัตว์เลี้ยงได้'; }
+        finally { loading = false; }
 	}
 
 	function openEditModal() {
 		editPetData = { ...pet };
+		for (const field of ['breed', 'color', 'allergies', 'notes']) if (editPetData[field] === '-') editPetData[field] = '';
 		if (editPetData.weight) editPetData.weight = editPetData.weight.replace(' กก.', '');
 		showEditModal = true;
 	}
 
 	async function saveEditPet() {
+		const errors = petErrors(editPetData);
+		if (Object.keys(errors).length) { error = Object.values(errors)[0]; return; }
 		savingEdit = true;
 		error = '';
 		try {
@@ -122,15 +144,18 @@
 	<title>{pet.name} | HoangHoang Meow</title>
 </svelte:head>
 
-<TopNav title={pet.name} subtitle={pet.species + ' · ' + pet.breed} />
+<TopNav title={pet.name || 'ข้อมูลสัตว์เลี้ยง'} subtitle={pet.species + ' · ' + pet.breed} />
 
 <div class="p-4 space-y-6 sm:p-6 lg:p-8">
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
-	<!-- Pet Profile Header -->
+	{#if loading}<p role="status">กำลังโหลดข้อมูล…</p>{:else if !pet.id}<p>ไม่พบสัตว์เลี้ยง <a href="/pets">กลับไปหน้าสัตว์เลี้ยง</a></p>{/if}
+    {#if pet.id}
+    {#if pet.readOnly}<p class="rounded-xl bg-amber-50 p-4 text-amber-800">ดูข้อมูลได้อย่างเดียว — Free จัดการได้ 3 ตัวแรก <a class="underline" href="/upgrade">อัปเกรดแพ็กเกจ</a></p>{/if}
+    <!-- Pet Profile Header -->
 		<div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
-		<div class="flex flex-col gap-6 sm:flex-row sm:items-center">
+		<div class="flex flex-col gap-6 sm:flex-row sm:flex-wrap sm:items-center">
 			<!-- Avatar -->
-			<div class="flex h-24 w-24 items-center justify-center rounded-2xl bg-gray-50 text-5xl overflow-hidden">
+			<div class="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gray-50 text-5xl overflow-hidden">
 				{#if !pet.image || pet.image === '🐾' || pet.image.match(/[\u{1F300}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/u)}
 					<Icon name={pet.species === 'หมา' ? 'dog' : 'cat'} class="w-12 h-12 text-gray-400" />
 				{:else}
@@ -139,8 +164,8 @@
 			</div>
 
 			<!-- Info -->
-			<div class="flex-1">
-				<div class="flex items-center gap-3">
+			<div class="min-w-0 w-full sm:w-auto sm:flex-1 sm:basis-64">
+				<div class="flex flex-wrap items-center gap-3">
 					<h2 class="text-2xl font-bold text-gray-800">{pet.name}</h2>
 					<span
 						class="rounded-full px-3 py-0.5 text-xs font-medium {pet.status === 'ปกติ'
@@ -152,7 +177,7 @@
 				</div>
 				<div class="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
 					<span class="flex items-center gap-1.5"><Icon name="collar" class="w-4 h-4" /> {pet.species}</span>
-					<span class="flex items-center gap-1.5"><Icon name="id-card" class="w-4 h-4" /> {pet.breed}</span>
+					<span class="flex items-center gap-1.5"><Icon name="id-card" class="w-4 h-4" /> {pet.breed || '-'}</span>
 					<span class="flex items-center gap-1.5"><Icon name="gender" class="w-4 h-4" /> {pet.gender}</span>
 					<span class="flex items-center gap-1.5"><Icon name="calendar" class="w-4 h-4" /> {pet.age}</span>
 					<span class="flex items-center gap-1.5"><Icon name="weight" class="w-4 h-4" /> {pet.weight}</span>
@@ -161,9 +186,9 @@
 			</div>
 
 			<!-- Actions -->
-			<div class="flex gap-2">
+			<div class="flex flex-wrap gap-2">
 				<button
-					onclick={openEditModal}
+					disabled={pet.readOnly} onclick={openEditModal}
 					class="flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100"
 				>
 					<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -176,7 +201,7 @@
 					แก้ไข
 				</button>
 				<button
-					onclick={() => showDeleteModal = true}
+					disabled={pet.readOnly} onclick={() => showDeleteModal = true}
 					class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-100"
 				>
 					<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -214,13 +239,15 @@
 					{#each [
 						{ label: 'ชื่อ', value: pet.name },
 						{ label: 'ชนิด', value: pet.species },
-						{ label: 'พันธุ์', value: pet.breed },
+						{ label: 'พันธุ์', value: pet.breed || '-' },
 						{ label: 'เพศ', value: pet.gender },
 						{ label: 'อายุ', value: pet.age },
 						{ label: 'น้ำหนัก', value: pet.weight },
-						{ label: 'สี', value: pet.color }
+						{ label: 'สี', value: pet.color || '-' },
+						{ label: 'ข้อมูลการแพ้', value: pet.allergies || '-' },
+						{ label: 'หมายเหตุเพิ่มเติม', value: pet.notes || '-' }
 					] as info}
-						<div class="flex justify-between border-b border-gray-100 pb-2 last:border-0">
+						<div class="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4 border-b border-gray-100 pb-2 last:border-0">
 							<span class="text-sm text-gray-500">{info.label}</span>
 							<span class="text-sm font-medium text-gray-800">{info.value}</span>
 						</div>
@@ -242,7 +269,7 @@
 							{/if}
 						</div>
 						<div class="min-w-0 flex-1">
-							<p class="text-sm font-medium text-gray-800">{record.description}</p>
+							<p class="text-sm font-medium text-gray-800">{record.title}</p><p class="text-sm text-gray-600">{record.description || '-'}</p>
 							<p class="text-xs text-gray-400">{record.date} · {record.vet}</p>
 						</div>
 					</div>
@@ -253,21 +280,22 @@
 	{:else if activeTab === 'health'}
 		<!-- Health Records -->
 		<div class="rounded-2xl border border-gray-200 bg-white">
-			<div class="flex items-center justify-between p-6 pb-4">
-				<div class="flex items-center gap-3">
+			<div class="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-6 pb-4">
+				<div class="flex flex-wrap items-center gap-3">
 					<h3 class="text-base font-bold text-gray-800 flex items-center gap-1.5"><Icon name="clipboard" class="w-5 h-5 text-gray-600" /> บันทึกสุขภาพทั้งหมด</h3>
 					<span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
 						{petRecords.length} รายการ
 					</span>
 				</div>
 				<button
-					onclick={() => showAddHealthModal = true}
+					disabled={pet.readOnly} onclick={() => showAddHealthModal = true}
 					class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
 				>
 					+ เพิ่มบันทึกสุขภาพ
 				</button>
 			</div>
-			<div class="overflow-x-auto">
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users must be able to scroll this region.) -->
+			<div class="table-scroll" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนซ้ายขวาเพื่อดูเพิ่มเติม">
 				<table class="w-full">
 					<thead>
 						<tr class="border-t border-b border-gray-100 bg-gray-50/50">
@@ -286,7 +314,7 @@
 										{record.type}
 									</span>
 								</td>
-								<td class="px-6 py-4 text-sm text-gray-700">{record.description}</td>
+								<td class="px-6 py-4 text-sm text-gray-700"><strong>{record.title}</strong><p>{record.description || '-'}</p><a class="text-brand-600 underline" href="/health">จัดการประวัติ</a></td>
 								<td class="px-6 py-4 text-sm text-gray-500">{record.date}</td>
 								<td class="px-6 py-4 text-sm text-gray-500">{record.vet}</td>
 								<td class="px-6 py-4 text-right text-sm font-medium text-gray-800">฿{record.cost.toLocaleString()}</td>
@@ -333,11 +361,12 @@
 			{/each}
 		</div>
 	{/if}
+    {/if}
 
 	<!-- Edit Pet Modal -->
 	{#if showEditModal}
 		<div
-			class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-y-auto"
+			use:modal class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-y-auto"
 			onclick={(e) => { if (e.target === e.currentTarget) showEditModal = false; }}
 			onkeydown={(e) => { if (e.key === 'Escape') showEditModal = false; }}
 			role="button"
@@ -345,11 +374,14 @@
 		>
 			<div class="mx-4 my-8 w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl cursor-default sm:p-6">
 				<h2 class="text-lg font-bold text-gray-800 mb-6">แก้ไขข้อมูลสัตว์เลี้ยง</h2>
+				{#if error}<p role="alert" class="mb-4 text-sm text-red-600">{error}</p>{/if}
 				<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); saveEditPet(); }}>
+                    <PetPhoto bind:value={editPetData.avatarUrl} bind:busy={photoBusy} />
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">ชื่อ</label>
-							<input type="text" required bind:value={editPetData.name} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+							<input type="text" required bind:value={editPetData.name} class="w-full rounded-xl border {editNameError ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-gray-200 focus:border-indigo-400 focus:ring-indigo-100'} px-4 py-2.5 text-sm outline-none focus:ring-2" />
+							{#if editNameError}<p class="mt-1 text-xs text-red-500">{editNameError}</p>{/if}
 						</div>
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">ชนิด</label>
@@ -365,7 +397,8 @@
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">พันธุ์</label>
-							<input type="text" bind:value={editPetData.breed} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+							<input type="text" bind:value={editPetData.breed} class="w-full rounded-xl border {editBreedError ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-gray-200 focus:border-indigo-400 focus:ring-indigo-100'} px-4 py-2.5 text-sm outline-none focus:ring-2" />
+							{#if editBreedError}<p class="mt-1 text-xs text-red-500">{editBreedError}</p>{/if}
 						</div>
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">เพศ</label>
@@ -379,7 +412,7 @@
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">วันเกิด</label>
-							<input type="date" bind:value={editPetData.birthdate} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+							<input type="date" required max={localDate()} bind:value={editPetData.birthdate} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
 						</div>
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">น้ำหนัก (กก.)</label>
@@ -389,21 +422,22 @@
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">สี</label>
-							<input type="text" bind:value={editPetData.color} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+							<input type="text" bind:value={editPetData.color} class="w-full rounded-xl border {editColorError ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-gray-200 focus:border-indigo-400 focus:ring-indigo-100'} px-4 py-2.5 text-sm outline-none focus:ring-2" />
+							{#if editColorError}<p class="mt-1 text-xs text-red-500">{editColorError}</p>{/if}
 						</div>
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">ข้อมูลการแพ้</label>
-							<textarea bind:value={editPetData.allergies} rows="1" class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"></textarea>
+							<textarea maxlength="500" bind:value={editPetData.allergies} rows="1" class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"></textarea>
 						</div>
 					</div>
 					<div>
 						<label class="mb-1 block text-sm font-medium text-gray-700">หมายเหตุเพิ่มเติม</label>
-						<textarea bind:value={editPetData.notes} rows="2" class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"></textarea>
+						<textarea maxlength="500" bind:value={editPetData.notes} rows="2" class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"></textarea>
 					</div>
 					
 					<div class="flex justify-end gap-3 pt-2">
 						<button type="button" onclick={() => showEditModal = false} class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">ยกเลิก</button>
-						<button type="submit" disabled={savingEdit} class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60">{savingEdit ? 'กำลังบันทึก…' : 'บันทึกการแก้ไข'}</button>
+						<button type="submit" disabled={photoBusy || savingEdit || !editFormValid} class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">{savingEdit ? 'กำลังบันทึก…' : 'บันทึกการแก้ไข'}</button>
 					</div>
 				</form>
 			</div>
@@ -412,7 +446,7 @@
 
 	<!-- Delete Pet Modal -->
 	{#if showDeleteModal}
-		<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 cursor-default">
+		<div use:modal class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 cursor-default">
 			<div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
 				<h2 class="text-xl font-bold text-gray-900 mb-2">ลบสัตว์เลี้ยง</h2>
 				<p class="text-sm text-gray-500 mb-6">คุณแน่ใจหรือไม่ว่าต้องการลบ <span class="font-bold">{pet.name}</span>? ข้อมูลทั้งหมดจะถูกลบอย่างถาวรและไม่สามารถกู้คืนได้</p>
@@ -427,7 +461,7 @@
 	<!-- Add Health Record Modal -->
 	{#if showAddHealthModal}
 		<div
-			class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-y-auto"
+			use:modal class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-y-auto"
 			onclick={(e) => { if (e.target === e.currentTarget) showAddHealthModal = false; }}
 			onkeydown={(e) => { if (e.key === 'Escape') showAddHealthModal = false; }}
 			role="button"
@@ -449,30 +483,33 @@
 					</div>
 					<div>
 						<label class="mb-1 block text-sm font-medium text-gray-700">หัวข้อ / รายละเอียดสั้นๆ</label>
-						<input type="text" required bind:value={newHealthRecord.title} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+						<input type="text" required bind:value={newHealthRecord.title} class="w-full rounded-xl border {healthTitleError ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-gray-200 focus:border-indigo-400 focus:ring-indigo-100'} px-4 py-2.5 text-sm outline-none focus:ring-2" />
+						{#if healthTitleError}<p class="mt-1 text-xs text-red-500">{healthTitleError}</p>{/if}
 					</div>
 					<div>
 						<label class="mb-1 block text-sm font-medium text-gray-700">รายละเอียด (เพิ่มเติม)</label>
-						<textarea bind:value={newHealthRecord.description} rows="2" class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"></textarea>
+						<textarea bind:value={newHealthRecord.description} rows="2" class="w-full rounded-xl border {healthDescError ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-gray-200 focus:border-indigo-400 focus:ring-indigo-100'} px-4 py-2.5 text-sm outline-none focus:ring-2"></textarea>
+						{#if healthDescError}<p class="mt-1 text-xs text-red-500">{healthDescError}</p>{/if}
 					</div>
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">วันที่</label>
-							<input type="date" required bind:value={newHealthRecord.date} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+							<input type="date" required max={localDate()} bind:value={newHealthRecord.date} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
 						</div>
 						<div>
 							<label class="mb-1 block text-sm font-medium text-gray-700">ค่าใช้จ่าย (บาท)</label>
-							<input type="number" step="0.01" bind:value={newHealthRecord.cost} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+							<input type="number" step="0.01" max="99999999.99" bind:value={newHealthRecord.cost} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
 						</div>
 					</div>
 					<div>
 						<label class="mb-1 block text-sm font-medium text-gray-700">สถานพยาบาล / ผู้ให้บริการ</label>
-						<input type="text" bind:value={newHealthRecord.provider} class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+						<input type="text" bind:value={newHealthRecord.provider} class="w-full rounded-xl border {healthProviderError ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-gray-200 focus:border-indigo-400 focus:ring-indigo-100'} px-4 py-2.5 text-sm outline-none focus:ring-2" />
+						{#if healthProviderError}<p class="mt-1 text-xs text-red-500">{healthProviderError}</p>{/if}
 					</div>
 					
 					<div class="flex justify-end gap-3 pt-2">
 						<button type="button" onclick={() => showAddHealthModal = false} class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">ยกเลิก</button>
-						<button type="submit" disabled={savingHealth} class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60">{savingHealth ? 'กำลังบันทึก…' : 'บันทึก'}</button>
+						<button type="submit" disabled={savingHealth || !healthFormValid} class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">{savingHealth ? 'กำลังบันทึก…' : 'บันทึก'}</button>
 					</div>
 				</form>
 			</div>

@@ -49,7 +49,7 @@
 		</section>
 
 		<!-- Right: Form Section -->
-		<section class="flex flex-col justify-center p-8 sm:p-12 xl:p-16 relative">
+		<section class="flex flex-col justify-center p-5 sm:p-12 xl:p-16 relative">
 			<a href="/" class="group flex items-center gap-4 transition-transform hover:-translate-y-1 w-fit lg:hidden">
 				<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-lg shadow-brand-500/20 ring-1 ring-brand-100">
 					<img src="/hoanghoangmeow-logo.png" alt="HoangHoang Meow" class="h-12 w-12 object-contain" />

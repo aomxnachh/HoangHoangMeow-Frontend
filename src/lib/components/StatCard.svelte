@@ -60,8 +60,8 @@
 		{/if}
 	</div>
 
-	<div class="relative z-10">
+	<div class="min-w-0 flex-1 relative z-10">
 		<p class="text-sm text-gray-500 font-medium">{label}</p>
-		<p class="text-2xl font-bold {c.text} mt-0.5">{value}</p>
+		<p class="text-xl sm:text-2xl font-bold {c.text} mt-0.5">{value}</p>
 	</div>
 </div>

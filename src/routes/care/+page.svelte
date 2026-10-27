@@ -1,22 +1,36 @@
 <script lang="ts">
+	import { modal } from '$lib/actions/modal';
 	import { onMount } from 'svelte';
 	import TopNav from '$lib/components/TopNav.svelte';
-	import { carePlans as mockCarePlans, careRecommendations as mockCareRecommendations, pets as mockPets } from '$lib/data/mock-data';
+	import ProductCards from '$lib/components/ProductCards.svelte';
+	import PetAvatar from '$lib/components/PetAvatar.svelte';
 	import { ApiError, api, request } from '$lib/api';
 	import { i18n } from '$lib/i18n';
-	let carePlans = $state<any[]>(mockCarePlans);
-	let careRecommendations = $state<any[]>(mockCareRecommendations);
-	let pets = $state<any[]>(mockPets);
+	let carePlans = $state<any[]>([]);
+	let careRecommendations = $state<any[]>([]);
+	let pets = $state<any[]>([]);
+	let warnings = $state<any[]>([]);
+	let loading = $state(true);
 	let error = $state('');
+	let loadVersion = 0;
 
 	let activeTab = $state('plans');
-	let selectedRec = $state<any>(null);
-	let filterPet = $state('ทั้งหมด');
+	let selectedRecId = $state<string | null>(null);
+	let filterPet = $state('');
 
 	let showModal = $state(false);
 	let isEditing = $state(false);
 	let editId = $state('');
 	let formData = $state({ petId: '', title: '', detail: '', frequencyDays: 1, nextDueAt: '' });
+
+	// --- Special character validation ---
+	const specialCharRegex = /[!@#$%^&*()_+=\[\]{};':"\\|,.<>\/?`~]/;
+	function hasSpecialChars(value: string): boolean {
+		return specialCharRegex.test(value || '');
+	}
+	let titleError = $derived(hasSpecialChars(formData.title) ? 'ห้ามใช้อักขระพิเศษ เช่น @#$%^&*' : '');
+	let detailError = $derived(formData.detail.length > 5000 ? 'กรุณากรอกรายละเอียดไม่เกิน 5000 ตัวอักษร' : '');
+	let careFormValid = $derived(!titleError && !detailError);
 	const frequencies = [
 		{ label: 'ทุกวัน', value: 1 },
 		{ label: 'ทุกสัปดาห์', value: 7 },
@@ -26,26 +40,47 @@
 		{ label: 'ทุกปี', value: 365 }
 	];
 
-	let petNames = $derived(['ทั้งหมด', ...pets.map((p) => p.name)]);
-
 	let filteredPlans = $derived(
-		carePlans.filter((c) => {
-			let pet = pets.find((p) => p.id === c.petId);
-			return filterPet === 'ทั้งหมด' || pet?.name === filterPet;
-		})
+		carePlans.filter((c) => !filterPet || c.petId === filterPet)
 	);
 
-	let filteredRecommendations = $derived(
-		careRecommendations.filter((r) => {
-			let pet = pets.find((p) => p.id === r.petId);
-			return filterPet === 'ทั้งหมด' || pet?.name === filterPet;
-		})
-	);
+	let filteredRecommendations = $derived.by(() => {
+		const groups = new Map<string, any>();
+		for (const rec of careRecommendations) {
+			if (filterPet && rec.petId !== filterPet) continue;
+			let group = groups.get(rec.id);
+			if (!group) {
+				group = { ...rec, members: [] };
+				groups.set(rec.id, group);
+			}
+			if (!group.members.some((member: any) => member.petId === rec.petId)) {
+				const pet = pets.find(p => p.id === rec.petId);
+				group.members.push({ ...rec, petName: pet?.name || rec.petName, image: pet?.image });
+			}
+		}
+		return [...groups.values()];
+	});
+	let selectedRec = $derived(filteredRecommendations.find(rec => rec.id === selectedRecId) || null);
 
 	function openAddModal() {
+		if (!pets.length) { error = 'กรุณาเพิ่มข้อมูลสัตว์เลี้ยงตัวแรกก่อนสร้างแผนดูแล'; return; }
+		error = '';
 		isEditing = false;
-		formData = { petId: pets[0]?.id || '', title: '', detail: '', frequencyDays: 1, nextDueAt: '' };
+		formData = { petId: pets.find(p => !p.readOnly)?.id || '', title: '', detail: '', frequencyDays: 1, nextDueAt: '' };
+		useRecommendations();
 		showModal = true;
+	}
+
+	function useRecommendations() {
+		if (isEditing) return;
+		const pet = pets.find((pet) => pet.id === formData.petId);
+		const recommendations = careRecommendations.filter((item) => item.petId === formData.petId);
+		formData.title = recommendations.length ? `แผนดูแล${pet?.name || ''}` : '';
+		formData.detail = recommendations.length ? [
+			pet?.allergies ? `ข้อมูลการแพ้: ${pet.allergies}` : '',
+			...recommendations.map((item) => item.description),
+			pet?.notes ? `หมายเหตุ: ${pet.notes}` : ''
+		].filter(Boolean).join('\n') : '';
 	}
 
 	function openEditModal(plan: any) {
@@ -85,14 +120,39 @@
 	}
 
 	async function loadCare() {
+        const version = ++loadVersion;
 		try {
-			const [petResult, planResult, recommendationResult] = await Promise.all([api<{ pets: any[] }>('/api/pets'), api<{ plans: any[] }>('/api/care-plans'), api<{ recommendations: any[] }>('/api/care-recommendations')]);
+			const [petResult, planResult, recommendationResult] = await Promise.all([api<{ pets: any[] }>('/api/pets'), api<{ plans: any[] }>('/api/care-plans'), api<{ recommendations: any[]; warnings?: any[] }>('/api/care-recommendations')]);
+			if (version !== loadVersion) return;
+            error = '';
+            warnings = recommendationResult.warnings || [];
 			pets = petResult.pets.map((pet) => ({ ...pet, id: String(pet.id), image: pet.image || '🐾' }));
 			carePlans = planResult.plans.map((plan) => ({ ...plan, id: String(plan.id), petId: String(plan.petId), frequency: plan.frequencyDays ? `ทุก ${plan.frequencyDays} วัน` : 'กำหนดเอง', nextDate: plan.nextDueAt ? new Date(plan.nextDueAt).toLocaleDateString('th-TH') : '-', status: plan.status === 'DONE' ? 'completed' : 'upcoming', items: plan.detail ? plan.detail.split('\n').filter(Boolean) : [] }));
 			careRecommendations = recommendationResult.recommendations.map((item) => ({ ...item, id: String(item.id), petId: item.petId != null ? String(item.petId) : '', type: item.ageRange, title: item.title || `คำแนะนำการดูแลสำหรับ ${item.petName}`, description: item.content, imageUrl: item.imageUrl || '', priority: 'low', dueDate: '-' }));
-		} catch (err) { error = err instanceof ApiError ? err.message : 'ไม่สามารถโหลดแผนดูแลได้'; }
+            if (selectedRecId && !careRecommendations.some(rec => rec.id === selectedRecId)) selectedRecId = null;
+		} catch (err) { if (version === loadVersion) error = err instanceof ApiError ? err.message : 'ไม่สามารถโหลดแผนดูแลได้'; }
+		finally { if (version === loadVersion) loading = false; }
 	}
-	onMount(loadCare);
+	onMount(() => {
+        const refresh = () => { if (document.visibilityState === 'visible') void loadCare(); };
+        const storageChanged = (event: StorageEvent) => { if (event.key === 'hhm_data_changed') refresh(); };
+        void loadCare();
+        const timer = window.setInterval(refresh, 15000);
+        window.addEventListener('focus', refresh);
+        window.addEventListener('online', refresh);
+        window.addEventListener('api_updated', refresh);
+        window.addEventListener('storage', storageChanged);
+        document.addEventListener('visibilitychange', refresh);
+        return () => {
+            ++loadVersion;
+            clearInterval(timer);
+            window.removeEventListener('focus', refresh);
+            window.removeEventListener('online', refresh);
+            window.removeEventListener('api_updated', refresh);
+            window.removeEventListener('storage', storageChanged);
+            document.removeEventListener('visibilitychange', refresh);
+        };
+    });
 </script>
 
 <svelte:head>
@@ -103,6 +163,13 @@
 
 <div class="p-4 space-y-6 animate-fade-in stagger-1 sm:p-6 lg:p-8">
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
+	{#if !pets.length}<p><a class="text-brand-600 underline" href="/pets">เพิ่มข้อมูลสัตว์เลี้ยงตัวแรก</a> เพื่อสร้างแผนดูแลและรับคำแนะนำ</p>{/if}
+	{#each warnings as warning}
+		<p role="status" class="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">{warning.petName || ''} {warning.message}
+			{#if warning.code === 'INVALID_PROFILE'}<a class="underline" href={`/pets/${warning.petId}`}>แก้ไขโปรไฟล์</a>{/if}
+			{#if warning.code === 'NO_STANDARD_PLAN'}<a class="underline" href="/reminders">ตั้งค่าแจ้งเตือนด้วยตนเอง</a>{/if}
+		</p>
+	{/each}
 	<!-- Tabs -->
 	<div class="flex flex-wrap items-center gap-3 sm:gap-4">
 		<div class="flex rounded-xl border border-gray-200 bg-white p-1">
@@ -120,21 +187,23 @@
 					? 'bg-brand-600 text-white shadow-sm'
 					: 'text-gray-600 hover:text-gray-800'}"
 			>
-				💡 คำแนะนำ ({careRecommendations.length})
+				💡 คำแนะนำ ({filteredRecommendations.length})
 			</button>
 		</div>
 
 		<select
 			bind:value={filterPet}
+			aria-label="กรองตามสัตว์เลี้ยง"
 			class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white sm:max-w-[200px]"
 		>
-			{#each petNames as name}
-				<option value={name}>🐾 {name}</option>
+			<option value="">🐾 ทั้งหมด</option>
+			{#each pets as pet}
+				<option value={pet.id}>🐾 {pet.name}</option>
 			{/each}
 		</select>
 
 		{#if activeTab === 'plans'}
-			<button onclick={openAddModal} class="relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group sm:ml-auto sm:w-auto">
+			<button onclick={openAddModal} disabled={loading} class="relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group sm:ml-auto sm:w-auto">
 				+ สร้างแผนดูแล
 			</button>
 		{/if}
@@ -148,7 +217,7 @@
 				<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up p-5">
 					<div class="flex items-start justify-between">
 						<div class="flex items-center gap-2">
-							<span class="text-2xl">{pet?.image}</span>
+							<PetAvatar image={pet?.image} name={pet?.name} />
 							<div>
 								<p class="text-xs text-gray-400">{pet?.name}</p>
 								<h3 class="text-sm font-bold text-gray-800">{plan.title}</h3>
@@ -200,11 +269,11 @@
 		<!-- Care Recommendations — Card Grid -->
 		<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
 			{#each filteredRecommendations as rec, i}
-				{@const pet = pets.find(p => p.id === rec.petId)}
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div
-					onclick={() => selectedRec = rec}
+					onclick={() => selectedRecId = rec.id}
+					data-recommendation-id={rec.id}
 					class="group relative cursor-pointer overflow-hidden rounded-3xl border-2 border-white/60 bg-white/90 shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-200 hover:shadow-2xl hover:shadow-brand-500/10 active:scale-[0.97] animate-fade-up"
 					style="animation-delay: {i * 60}ms"
 				>
@@ -243,9 +312,13 @@
 
 					<!-- Content -->
 					<div class="p-4">
-						<div class="mb-2 flex items-center gap-2">
-							<span class="text-lg">{pet?.image || '🐾'}</span>
-							<span class="text-xs text-gray-400">{pet?.name || rec.petName}</span>
+						<div class="mb-2 flex flex-wrap items-center gap-2">
+							{#each rec.members as member (member.petId)}
+								<span class="inline-flex min-w-0 max-w-full items-center gap-2">
+									<PetAvatar image={member.image} name={member.petName} />
+									<span class="break-words text-xs text-gray-400">{member.petName}</span>
+								</span>
+							{/each}
 						</div>
 						<h3 class="text-sm font-bold text-gray-800 line-clamp-1 transition-colors duration-200 group-hover:text-brand-600">
 							{rec.title}
@@ -269,12 +342,11 @@
 
 <!-- Recommendation Detail Popup -->
 {#if selectedRec}
-	{@const pet = pets.find(p => p.id === selectedRec.petId)}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
-		onclick={(e) => { if (e.target === e.currentTarget) selectedRec = null; }}
+		use:modal class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
+		onclick={(e) => { if (e.target === e.currentTarget) selectedRecId = null; }}
 	>
 		<!-- Backdrop -->
 		<div class="absolute inset-0 bg-gray-900/50 backdrop-blur-md" style="animation: rec-fade-in 0.25s ease-out forwards;"></div>
@@ -286,7 +358,7 @@
 		>
 			<!-- Close Button -->
 			<button
-				onclick={() => selectedRec = null}
+				onclick={() => selectedRecId = null}
 				class="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition-all hover:bg-black/50 hover:scale-110 active:scale-95"
 			>
 				<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -321,20 +393,31 @@
 
 			<!-- Content -->
 			<div class="p-6">
-				<div class="mb-3 flex items-center gap-2">
-					<span class="text-2xl">{pet?.image || '🐾'}</span>
-					<span class="text-sm text-gray-500">สำหรับ {pet?.name || selectedRec.petName || 'สัตว์เลี้ยง'}</span>
+				<div class="mb-3 flex flex-wrap items-center gap-2">
+					<span class="text-sm text-gray-500">สำหรับ</span>
+					{#each selectedRec.members as member (member.petId)}
+						<span class="inline-flex min-w-0 max-w-full items-center gap-2">
+							<PetAvatar image={member.image} name={member.petName} />
+							<span class="break-words text-sm text-gray-500">{member.petName}</span>
+						</span>
+					{/each}
 				</div>
 				<h2 class="text-lg font-bold text-gray-800">{selectedRec.title}</h2>
 				<div class="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-gray-600">
 					{selectedRec.description}
 				</div>
+				{#each selectedRec.members as member (member.petId)}
+					{#if member.allergies}<p class="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">ข้อมูลการแพ้ของ {member.petName}: {member.allergies}</p>{/if}
+					{#if member.notes}<p class="mt-2 text-sm">หมายเหตุของ {member.petName}: {member.notes}</p>{/if}
+					{#if selectedRec.members.length > 1}<p class="mt-4 text-sm font-semibold">สินค้าสำหรับ {member.petName}</p>{/if}
+					<ProductCards location="CARE" petId={member.petId} topic={selectedRec.title} />
+				{/each}
 			</div>
 
 			<!-- Footer -->
 			<div class="border-t border-gray-100 px-6 py-4">
 				<button
-					onclick={() => selectedRec = null}
+					onclick={() => selectedRecId = null}
 					class="w-full rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0"
 				>
 					ปิด
@@ -356,25 +439,28 @@
 </style>
 
 {#if showModal}
-	<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md">
+	<div use:modal class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md">
 		<div class="my-auto w-full max-w-md rounded-3xl glass-heavy p-5 shadow-xl sm:p-8">
 			<h2 class="text-xl font-bold text-gray-800 mb-4">{isEditing ? 'แก้ไขแผนดูแล' : 'สร้างแผนดูแล'}</h2>
+			{#if error}<p role="alert" class="mb-4 text-sm text-red-600">{error}</p>{/if}
 			<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-4">
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="petId">สัตว์เลี้ยง</label>
-					<select id="petId" bind:value={formData.petId} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
+					<select id="petId" bind:value={formData.petId} onchange={useRecommendations} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
 						{#each pets as pet}
-							<option value={pet.id}>{pet.name}</option>
+							<option value={pet.id} disabled={pet.readOnly}>{pet.name}{pet.readOnly ? ' (ดูข้อมูลเท่านั้น)' : ''}</option>
 						{/each}
 					</select>
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="title">หัวข้อ</label>
-					<input type="text" id="title" bind:value={formData.title} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white" />
+					<input type="text" id="title" bind:value={formData.title} required class="w-full rounded-2xl border-2 {titleError ? 'border-red-400 focus:border-red-400 focus:ring-red-100/50' : 'border-transparent focus:border-brand-400 focus:ring-brand-100/50'} bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:bg-white hover:bg-white text-gray-700" />
+					{#if titleError}<p class="mt-1 text-xs text-red-500">{titleError}</p>{/if}
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="detail">รายละเอียด (แต่ละบรรทัดคือ 1 รายการ)</label>
-					<textarea id="detail" bind:value={formData.detail} rows="3" class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white"></textarea>
+					<textarea id="detail" bind:value={formData.detail} rows="3" class="w-full rounded-2xl border-2 {detailError ? 'border-red-400 focus:border-red-400 focus:ring-red-100/50' : 'border-transparent focus:border-brand-400 focus:ring-brand-100/50'} bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:bg-white hover:bg-white text-gray-700"></textarea>
+					{#if detailError}<p class="mt-1 text-xs text-red-500">{detailError}</p>{/if}
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="frequency">ความถี่</label>
@@ -392,7 +478,7 @@
 					<button type="button" onclick={() => showModal = false} class="rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
 						ยกเลิก
 					</button>
-					<button type="submit" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group">
+					<button type="submit" disabled={!careFormValid} class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-lg">
 						บันทึก
 					</button>
 				</div>

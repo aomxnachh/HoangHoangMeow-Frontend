@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import TopNav from '$lib/components/TopNav.svelte';
 	import PetCard from '$lib/components/PetCard.svelte';
+	import AdCarousel from '$lib/components/AdCarousel.svelte';
 	import StatCard from '$lib/components/StatCard.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import type { Pet } from '$lib/data/mock-data';
@@ -96,33 +97,11 @@
 	</div>
 
 	{#if userPlanType === 'FREE' && ads.length > 0}
-		<!-- Ads Section for Free Users -->
-		<div class="space-y-4 animate-fade-up stagger-2">
-			<h2 class="text-xl font-extrabold text-gray-800">โฆษณาแนะนำ</h2>
-			<div class="flex overflow-x-auto gap-4 pb-4 snap-x">
-				{#each ads as ad}
-					<a
-						href={ad.targetUrl || '#'}
-						target={ad.targetUrl ? "_blank" : "_self"}
-						class="group flex-shrink-0 w-72 rounded-2xl glass-card snap-start overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 block"
-					>
-						{#if ad.imageUrl}
-							<div class="overflow-hidden">
-								<img src={ad.imageUrl} alt={ad.title} class="h-32 w-full object-cover transition-transform duration-500 group-hover:scale-110" />
-							</div>
-						{/if}
-						<div class="p-4 relative z-10">
-							<h3 class="font-bold text-gray-800 line-clamp-1 group-hover:text-brand-600 transition-colors">{ad.title}</h3>
-							<p class="mt-1 text-sm text-gray-600 line-clamp-2">{ad.content}</p>
-						</div>
-					</a>
-				{/each}
-			</div>
-		</div>
+		<AdCarousel items={ads} title="โฆษณาแนะนำ" />
 	{/if}
 
 	<!-- Stats Cards -->
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-fade-up stagger-3">
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 animate-fade-up stagger-3">
 		<StatCard label={i18n.dashboard.stats.totalPets} value={dashboardStats.totalPets} icon="paw" color="brand" />
 		<StatCard label={i18n.dashboard.stats.upcomingVaccinations} value={dashboardStats.upcomingVaccinations} icon="syringe" color="amber" />
 		<StatCard label={i18n.dashboard.stats.expenses} value="฿{expenseSummary.totalThisMonth.toLocaleString()}" icon="money" color="rose" />
@@ -139,7 +118,7 @@
 					{i18n.dashboard.viewAll}
 				</a>
 			</div>
-			<div class="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+			<div class="pet-grid gap-4">
 				{#each pets as pet}
 					<PetCard {pet} />
 				{/each}

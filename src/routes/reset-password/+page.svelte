@@ -33,7 +33,7 @@
 	<!-- Main Glass Container (Centered single column for reset password) -->
 	<div class="relative z-10 w-full max-w-md overflow-hidden rounded-3xl glass-heavy border border-white/60 shadow-[0_8px_32px_0_rgba(226,50,50,0.15)] animate-fade-up">
 		
-		<section class="flex flex-col justify-center p-8 sm:p-12 relative">
+		<section class="flex flex-col justify-center p-5 sm:p-12 relative">
 			<a href="/" class="group mx-auto flex items-center justify-center gap-4 transition-transform hover:-translate-y-1 w-fit">
 				<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-2xl shadow-lg shadow-brand-500/30 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
 					🐾

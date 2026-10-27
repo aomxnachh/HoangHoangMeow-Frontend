@@ -10,6 +10,10 @@
 	let loading = $state(false);
 	let error = $state('');
 	let message = $state('');
+	function nextPage() {
+		const next = new URLSearchParams(window.location.search).get('next') || '/';
+		return next.startsWith('/') && !next.startsWith('//') && !next.includes('\\') ? next : '/';
+	}
 
 	async function login() {
 		loading = true;
@@ -17,7 +21,7 @@
 		try {
 			const result = await api<{ token: string; user: any }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
 			saveSession(result.token, result.user);
-			await goto('/');
+			await goto(nextPage());
 		} catch (err) {
 			error = err instanceof ApiError ? err.message : 'เชื่อมต่อระบบไม่ได้ กรุณาลองใหม่';
 		} finally { loading = false; }
@@ -33,6 +37,8 @@
 	}
 
 	onMount(() => {
+		let retry: ReturnType<typeof setTimeout>;
+		let resizeObserver: ResizeObserver | undefined;
 		const handleGoogleLogin = async (response: any) => {
 			try {
 				loading = true;
@@ -41,7 +47,7 @@
 					body: JSON.stringify({ token: response.credential }) 
 				});
 				saveSession(result.token, result.user);
-				window.location.href = '/'; // Force full redirect to ensure layout picks up session
+				window.location.href = nextPage();
 			} catch (err) {
 				error = err instanceof ApiError ? err.message : 'ล็อกอิน Google ไม่สำเร็จ';
 			} finally {
@@ -51,6 +57,7 @@
 
 		const initGoogle = () => {
 			if (window.google?.accounts?.id) {
+				const googleId = window.google.accounts.id;
 				window.google.accounts.id.initialize({
 					client_id: PUBLIC_GOOGLE_CLIENT_ID,
 					callback: handleGoogleLogin,
@@ -60,20 +67,31 @@
 				});
 				const btnContainer = document.getElementById('googleSignInDiv');
 				if (btnContainer) {
-					window.google.accounts.id.renderButton(btnContainer, {
+					let lastWidth = 0;
+					const renderButton = () => {
+						const width = Math.min(320, Math.floor(btnContainer.clientWidth));
+						if (!width || width === lastWidth) return;
+						lastWidth = width;
+						btnContainer.replaceChildren();
+						googleId.renderButton(btnContainer, {
 						type: 'standard',
 						shape: 'pill',
 						theme: 'outline',
 						text: 'continue_with',
 						size: 'large',
-						width: 320
+						width
 					});
+					};
+					renderButton();
+					resizeObserver = new ResizeObserver(renderButton);
+					resizeObserver.observe(btnContainer);
 				}
 			} else {
-				setTimeout(initGoogle, 100); // Retry until script loads
+				retry = setTimeout(initGoogle, 100); // Retry until script loads
 			}
 		};
 		initGoogle();
+		return () => { clearTimeout(retry); resizeObserver?.disconnect(); };
 	});
 </script>
 <svelte:head>
@@ -91,7 +109,7 @@
 	<div class="relative z-10 grid w-full max-w-5xl overflow-hidden rounded-3xl glass-heavy border border-white/60 shadow-[0_8px_32px_0_rgba(226,50,50,0.15)] lg:grid-cols-2 animate-fade-up">
 		
 		<!-- Left: Form Section -->
-		<section class="flex flex-col justify-center p-8 sm:p-12 xl:p-16 relative">
+		<section class="flex flex-col justify-center p-5 sm:p-12 xl:p-16 relative">
 			<a href="/" class="group flex items-center gap-4 transition-transform hover:-translate-y-1 w-fit">
 				<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-lg shadow-brand-500/20 ring-1 ring-brand-100 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
 					<img src="/hoanghoangmeow-logo.png" alt="HoangHoang Meow" class="h-14 w-14 object-contain" />
@@ -117,7 +135,7 @@
 					<input id="login-password" type="password" required bind:value={password} placeholder="••••••••" class="w-full rounded-2xl border-2 border-transparent bg-gray-50/50 px-5 py-3.5 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-gray-50" />
 				</div>
 				
-				<div class="flex items-center justify-between text-sm px-1">
+				<div class="flex flex-wrap items-center justify-between gap-3 text-sm px-1">
 					<label class="flex items-center gap-3 text-gray-600 font-medium cursor-pointer group">
 						<div class="relative flex items-center justify-center">
 							<input type="checkbox" class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-gray-300 checked:border-brand-500 checked:bg-brand-500 transition-all focus:ring-2 focus:ring-brand-200 focus:ring-offset-1" />

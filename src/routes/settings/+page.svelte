@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { modal } from '$lib/actions/modal';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import TopNav from '$lib/components/TopNav.svelte';
@@ -180,7 +181,7 @@
 {#if showDeleteModal}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4 animate-fade-in"
+		use:modal class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4 animate-fade-in"
 		onclick={(e) => { if (e.target === e.currentTarget) showDeleteModal = false; }}
 		onkeydown={(e) => { if (e.key === 'Escape') showDeleteModal = false; }}
 		role="button"

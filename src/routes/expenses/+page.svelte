@@ -1,13 +1,29 @@
 <script lang="ts">
+	import { modal } from '$lib/actions/modal';
 	import { onMount } from 'svelte';
 	import TopNav from '$lib/components/TopNav.svelte';
 	import StatCard from '$lib/components/StatCard.svelte';
-	import Icon from '$lib/components/Icon.svelte';
-	import { expenses as mockExpenses, expenseSummary as mockExpenseSummary, pets as mockPets } from '$lib/data/mock-data';
+	import PetAvatar from '$lib/components/PetAvatar.svelte';
 	import { ApiError, api, request } from '$lib/api';
-	let expenses = $state<any[]>(mockExpenses);
-	let pets = $state<any[]>(mockPets);
-	let expenseSummary = $state<any>(mockExpenseSummary);
+	import { localDate } from '$lib/validation';
+	let expenses = $state<any[]>([]);
+	let pets = $state<any[]>([]);
+	let period = $state('all');
+    let selectedYear = $state(String(new Date().getFullYear()));
+    let selectedMonth = $state(String(new Date().getMonth() + 1).padStart(2, '0'));
+    let years = $derived([...new Set([String(new Date().getFullYear()), ...expenses.map(e => e.date.slice(0, 4))])].sort().reverse());
+    let expenseSummary = $derived.by(() => {
+        const rows = filteredExpenses;
+        const categories = new Map<string, number>();
+        const months = new Map<string, number>();
+        for (const row of rows) {
+            categories.set(row.category, (categories.get(row.category) || 0) + row.amount);
+            months.set(row.date.slice(0, 7), (months.get(row.date.slice(0, 7)) || 0) + row.amount);
+        }
+        const total = rows.reduce((sum, row) => sum + row.amount, 0);
+        return { totalThisMonth: total, averagePerMonth: months.size ? Math.round(total / months.size * 100) / 100 : 0, byCategory: [...categories].map(([category, amount]) => ({ category, amount, percentage: total ? Math.round(amount / total * 100) : 0 })), monthlyTrend: [...months].sort(([a], [b]) => a.localeCompare(b)).map(([month, amount]) => ({ month, amount })) };
+    });
+	let loading = $state(true);
 	let error = $state('');
 
 	let filterPet = $state('ทั้งหมด');
@@ -17,12 +33,20 @@
 	let formData = $state({ petId: '', category: 'อาหาร', description: '', date: '', amount: '' });
 	const formCategories = ['อาหาร', 'สุขภาพ', 'ของใช้', 'ความสวยงาม', 'อื่นๆ'];
 
-	let petNames = $derived(['ทั้งหมด', ...pets.map((p) => p.name)]);
+	// --- Special character validation ---
+	const specialCharRegex = /[!@#$%^&*()_+=\[\]{};':"\\|,.<>\/?`~]/;
+	function hasSpecialChars(value: string): boolean {
+		return specialCharRegex.test(value);
+	}
+	let descriptionError = $derived(hasSpecialChars(formData.description) ? 'ห้ามใช้อักขระพิเศษ เช่น @#$%^&*' : '');
+	let expenseFormValid = $derived(!descriptionError);
+
+	let editablePets = $derived(pets.filter(p => !p.readOnly));
 	let categories = $derived(['ทั้งหมด', ...new Set(expenses.map((e) => e.category))]);
 
 	let topCategory = $derived(() => {
 		const counts: Record<string, number> = {};
-		for (const e of expenses) counts[e.category] = (counts[e.category] || 0) + e.amount;
+		for (const e of filteredExpenses) counts[e.category] = (counts[e.category] || 0) + e.amount;
 		const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 		return sorted.length ? sorted[0][0] : '-';
 	});
@@ -43,11 +67,15 @@
 	}
 
 	function openModal() {
-		formData = { petId: pets[0]?.id || '', category: 'อาหาร', description: '', date: '', amount: '' };
+		formData = { petId: editablePets[0]?.id || '', category: 'อาหาร', description: '', date: '', amount: '' };
 		showAddModal = true;
 	}
 
 	async function handleAdd() {
+		error = '';
+		if (!formData.description.trim() || !expenseFormValid) { error = 'กรุณากรอกรายละเอียดโดยไม่ใช้อักขระพิเศษ'; return; }
+		if (!formData.date || formData.date > localDate()) { error = 'กรุณากรอกวันที่ถูกต้องและไม่เกินวันนี้'; return; }
+		if (formData.amount === '' || formData.amount == null || !Number.isFinite(Number(formData.amount)) || Number(formData.amount) < 0) { error = 'กรุณากรอกจำนวนเงินที่ถูกต้อง'; return; }
 		try {
 			await request('/api/expenses', 'POST', { ...formData, petId: Number(formData.petId), amount: Number(formData.amount) });
 			showAddModal = false;
@@ -66,9 +94,10 @@
 	let filteredExpenses = $derived(
 		expenses.filter((e) => {
 			let pet = pets.find((p) => p.id === e.petId);
-			let matchesPet = filterPet === 'ทั้งหมด' || pet?.name === filterPet;
+			let matchesPet = filterPet === 'ทั้งหมด' || e.petId === filterPet;
 			let matchesCategory = filterCategory === 'ทั้งหมด' || e.category === filterCategory;
-			return matchesPet && matchesCategory;
+			const matchesPeriod = period === 'all' || (e.date.startsWith(selectedYear) && (period === 'year' || e.date.startsWith(`${selectedYear}-${selectedMonth}`)));
+            return matchesPet && matchesCategory && matchesPeriod;
 		})
 	);
 
@@ -76,12 +105,12 @@
 
 	async function loadExpenses() {
 		try {
-			const [expenseResult, petResult, dashboard] = await Promise.all([api<{ expenses: any[] }>('/api/expenses'), api<{ pets: any[] }>('/api/pets'), api<any>('/api/dashboard')]);
+			const [expenseResult, petResult] = await Promise.all([api<{ expenses: any[] }>('/api/expenses'), api<{ pets: any[] }>('/api/pets')]);
 			pets = petResult.pets.map((pet) => ({ ...pet, id: String(pet.id) }));
 			expenses = expenseResult.expenses.map((expense) => ({ ...expense, petId: String(expense.petId), amount: Number(expense.amount), description: expense.description || '-' }));
 			const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-			expenseSummary = { totalThisMonth: dashboard.stats.totalThisMonth, averagePerMonth: dashboard.monthlyTrend.length ? Math.round(total / dashboard.monthlyTrend.length) : 0, byCategory: dashboard.byCategory, monthlyTrend: dashboard.monthlyTrend };
 		} catch (err) { error = err instanceof ApiError ? err.message : 'ไม่สามารถโหลดค่าใช้จ่ายได้'; }
+		finally { loading = false; }
 	}
 	onMount(loadExpenses);
 </script>
@@ -95,15 +124,20 @@
 <div class="p-4 space-y-6 animate-fade-in stagger-1 sm:p-6 lg:p-8">
 	<div class="flex items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold text-gray-800 hidden sm:block">ค่าใช้จ่าย</h1>
-		<button onclick={openModal} class="relative ml-auto whitespace-nowrap overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group sm:px-6">
+		<button onclick={openModal} disabled={loading || !editablePets.length} class="relative ml-auto whitespace-nowrap overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group sm:px-6 disabled:opacity-50">
 			+ เพิ่มรายจ่าย
 		</button>
 	</div>
 
 	{#if error}<p class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>{/if}
-	<!-- Stats -->
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-		<StatCard label="ค่าใช้จ่ายเดือนนี้" value="฿{expenseSummary.totalThisMonth.toLocaleString()}" icon="money" color="rose" />
+	<div class="flex flex-wrap gap-3 rounded-xl bg-white p-4">
+        <label>ช่วงเวลา<select aria-label="ช่วงเวลาค่าใช้จ่าย" bind:value={period} class="ml-2 rounded-lg border p-2"><option value="all">ทั้งหมด</option><option value="month">รายเดือน</option><option value="year">รายปี</option></select></label>
+        {#if period !== 'all'}<label>ปี<select aria-label="ปีค่าใช้จ่าย" bind:value={selectedYear} class="ml-2 rounded-lg border p-2">{#each years as year}<option value={year}>{Number(year) + 543}</option>{/each}</select></label>{/if}
+        {#if period === 'month'}<label>เดือน<select aria-label="เดือนค่าใช้จ่าย" bind:value={selectedMonth} class="ml-2 rounded-lg border p-2">{#each Array.from({ length: 12 }, (_, i) => i + 1) as month}<option value={String(month).padStart(2, '0')}>{new Date(2000, month - 1).toLocaleString('th-TH', { month: 'long' })}</option>{/each}</select></label>{/if}
+    </div>
+    <!-- Stats -->
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+		<StatCard label="ค่าใช้จ่ายตามช่วงที่เลือก" value="฿{expenseSummary.totalThisMonth.toLocaleString()}" icon="money" color="rose" />
 		<StatCard label="ค่าเฉลี่ยต่อเดือน" value="฿{expenseSummary.averagePerMonth.toLocaleString()}" icon="trending" color="blue" />
 		<StatCard label="รายการทั้งหมด" value={filteredExpenses.length} icon="receipt" color="indigo" />
 		<StatCard label="หมวดหมู่มากที่สุด" value={topCategory()} icon="heart" color="amber" />
@@ -114,7 +148,7 @@
 		<!-- Monthly Trend -->
 		<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up p-6 lg:col-span-2">
 			<h2 class="text-base font-bold text-gray-800">แนวโน้มค่าใช้จ่ายรายเดือน</h2>
-			<div class="mt-8 flex h-60 items-end justify-between gap-2 px-2 w-full relative border-l border-b border-gray-100 pb-2">
+			<div class="overflow-x-auto pb-8"><div class="mt-8 flex h-60 items-end justify-between gap-2 px-2 w-full relative border-l border-b border-gray-100 pb-2">
 				{#if expenseSummary?.monthlyTrend?.length > 0}
 					<!-- Grid lines -->
 					<div class="absolute inset-0 flex flex-col justify-between pb-8 pointer-events-none">
@@ -126,7 +160,7 @@
 					{#each expenseSummary.monthlyTrend as month}
 						{@const maxAmount = Math.max(...expenseSummary.monthlyTrend.map((m: any) => m.amount), 5000)}
 						{@const heightPercent = Math.max((month.amount / maxAmount) * 100, 2)}
-						<div class="group relative flex flex-1 flex-col items-center justify-end h-full z-10">
+						<div class="group relative min-w-12 flex flex-1 flex-col items-center justify-end h-full z-10">
 							<!-- Tooltip -->
 							<div class="absolute -top-12 opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 transition-all duration-300 pointer-events-none z-20">
 								<div class="bg-gray-900 text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow-xl whitespace-nowrap">
@@ -156,6 +190,7 @@
 			</div>
 		</div>
 
+        </div>
 		<!-- By Category -->
 		<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up p-6">
 			<h2 class="text-base font-bold text-gray-800 mb-4">ตามหมวดหมู่</h2>
@@ -185,12 +220,10 @@
 	<div class="flex flex-wrap items-center justify-between gap-4">
 		<div class="flex flex-wrap gap-3">
 			<select
-				bind:value={filterPet}
+				aria-label="กรองสัตว์เลี้ยง" bind:value={filterPet}
 				class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white text-gray-700"
 			>
-				{#each petNames as name}
-					<option value={name}>{name}</option>
-				{/each}
+				<option value="ทั้งหมด">ทั้งหมด</option>{#each pets as pet}<option value={pet.id}>{pet.name}</option>{/each}
 			</select>
 
 			<select
@@ -210,7 +243,8 @@
 
 	<!-- Expense Table -->
 	<div class="rounded-3xl glass-heavy border border-white/60 shadow-xl animate-fade-up overflow-hidden">
-		<div class="overflow-x-auto">
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users must be able to scroll this region.) -->
+			<div class="table-scroll" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนซ้ายขวาเพื่อดูเพิ่มเติม">
 			<table class="w-full">
 				<thead>
 					<tr class="border-b border-gray-200 bg-gray-50/50">
@@ -228,7 +262,7 @@
 						<tr class="border-b border-gray-100 transition-colors hover:bg-gray-50">
 							<td class="px-6 py-4">
 								<div class="flex items-center gap-2">
-									<span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-500"><Icon name="cat" class="w-5 h-5" /></span>
+									<PetAvatar image={pet?.image} name={pet?.name} />
 									<span class="text-sm font-medium text-gray-800">{pet?.name}</span>
 								</div>
 							</td>
@@ -289,15 +323,16 @@
 </div>
 
 {#if showAddModal}
-	<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md animate-fade-in">
+	<div use:modal class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md animate-fade-in">
 		<div class="my-auto w-full max-w-md rounded-3xl glass-heavy p-5 shadow-xl sm:p-8">
 			<h2 class="text-xl font-bold text-gray-800 mb-4">เพิ่มรายจ่าย</h2>
+			{#if error}<p role="alert" class="mb-4 text-sm text-red-600">{error}</p>{/if}
 			<form onsubmit={(e) => { e.preventDefault(); handleAdd(); }} class="space-y-4">
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="petId">สัตว์เลี้ยง</label>
 					<select id="petId" bind:value={formData.petId} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white text-gray-700">
 						{#each pets as pet}
-							<option value={pet.id}>{pet.name}</option>
+							<option value={pet.id} disabled={pet.readOnly}>{pet.name}{pet.readOnly ? ' (ดูข้อมูลเท่านั้น)' : ''}</option>
 						{/each}
 					</select>
 				</div>
@@ -311,21 +346,22 @@
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="description">รายละเอียด</label>
-					<input type="text" id="description" bind:value={formData.description} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white text-gray-700" />
+					<input type="text" id="description" bind:value={formData.description} required class="w-full rounded-2xl border-2 {descriptionError ? 'border-red-400 focus:border-red-400 focus:ring-red-100/50' : 'border-transparent focus:border-brand-400 focus:ring-brand-100/50'} bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:bg-white hover:bg-white text-gray-700" />
+					{#if descriptionError}<p class="mt-1 text-xs text-red-500">{descriptionError}</p>{/if}
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="date">วันที่</label>
-					<input type="date" id="date" bind:value={formData.date} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white text-gray-700" />
+					<input type="date" max={localDate()} id="date" bind:value={formData.date} required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white text-gray-700" />
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-1" for="amount">จำนวนเงิน (บาท)</label>
-					<input type="number" id="amount" bind:value={formData.amount} min="0" required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white text-gray-700" />
+					<input type="number" step="0.01" max="99999999.99" id="amount" bind:value={formData.amount} min="0" required class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white text-gray-700" />
 				</div>
 				<div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 					<button type="button" onclick={() => showAddModal = false} class="rounded-2xl border-2 border-gray-200 px-6 py-3 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all hover:-translate-y-0.5">
 						ยกเลิก
 					</button>
-					<button type="submit" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group">
+					<button type="submit" disabled={!expenseFormValid} class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-lg">
 						บันทึก
 					</button>
 				</div>

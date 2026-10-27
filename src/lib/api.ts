@@ -51,11 +51,23 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 	const session = getSession();
 	if (session) headers.set('Authorization', `Bearer ${session.token}`);
 	if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-	const response = await fetch(`${API_URL}${path}`, { ...init, headers });
+	let response: Response;
+	try { response = await fetch(`${API_URL}${path}`, { ...init, cache: init.cache || 'no-store', headers, signal: init.signal || AbortSignal.timeout(20000) }); }
+	catch { throw new ApiError('เชื่อมต่อระบบไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'); }
 	const payload = response.status === 204 ? null : await response.json().catch(() => ({}));
 	if (!response.ok) {
-		if (response.status === 401) clearSession();
+		if (response.status === 401) {
+			clearSession();
+			if (browser && !['/login', '/register', '/reset-password'].includes(window.location.pathname)) {
+				window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+			}
+		}
 		throw new ApiError(payload.error || 'ไม่สามารถทำรายการได้', payload.code);
+	}
+	if (browser && init.method && !['GET', 'HEAD'].includes(init.method.toUpperCase())) {
+		window.dispatchEvent(new CustomEvent('api_updated', { detail: { path } }));
+		// Invalidate other tabs without sharing user data or authentication tokens.
+		try { localStorage.setItem('hhm_data_changed', JSON.stringify({ path, revision: crypto.randomUUID() })); } catch { /* Focus/poll refresh also works when storage is unavailable. */ }
 	}
 	return payload as T;
 }

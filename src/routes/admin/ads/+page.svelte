@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { modal } from '$lib/actions/modal';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import TopNav from '$lib/components/TopNav.svelte';
@@ -6,6 +7,14 @@
 
 	let ads = $state<Array<any>>([]);
 	let categories = $state<Array<{ id: number; species: string }>>([]);
+	let adCategories = $derived(categories.filter(category => ['หมา', 'แมว'].includes(category.species.trim())));
+	const locations = [
+		{ value: 'DASHBOARD', label: 'แดชบอร์ด' },
+		{ value: 'REMINDERS', label: 'การแจ้งเตือน' },
+		{ value: 'CARE', label: 'คำแนะนำและแผนดูแล' },
+		{ value: 'ALL', label: 'ทุกหน้า' },
+		{ value: 'SIDEBAR', label: 'แถบด้านข้าง' }
+	];
 	let loading = $state(true);
 	let error = $state('');
 
@@ -48,12 +57,14 @@
 	});
 
 	function openAddModal() {
+		error = '';
 		editingId = null;
 		formData = { title: '', content: '', imageUrl: '', targetUrl: '', petCategoryId: '', location: 'DASHBOARD' };
 		showModal = true;
 	}
 
 	function openEditModal(ad: any) {
+		error = '';
 		editingId = ad.id;
 		formData = {
 			title: ad.title,
@@ -67,7 +78,13 @@
 	}
 
 	async function saveAd() {
-		saving = true; error = '';
+		if (saving) return;
+		error = '';
+		if (formData.petCategoryId !== '' && !adCategories.some(category => category.id === Number(formData.petCategoryId))) {
+			error = 'กรุณาเลือกหมา แมว หรือทุกประเภทสัตว์เลี้ยง';
+			return;
+		}
+		saving = true;
 		try {
 			const body = {
 				...formData,
@@ -110,6 +127,7 @@
 		<h2 class="text-lg font-bold text-gray-800">รายการโฆษณา</h2>
 		<button
 			onclick={openAddModal}
+            disabled={loading}
 			class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-500/40 active:translate-y-0 group"
 		>
 			+ เพิ่มโฆษณา
@@ -124,7 +142,8 @@
 		{:else if ads.length === 0}
 			<p class="py-12 text-center text-sm text-gray-500">ไม่พบโฆษณา</p>
 		{:else}
-			<div class="overflow-x-auto">
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users must be able to scroll this region.) -->
+			<div class="table-scroll" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนซ้ายขวาเพื่อดูเพิ่มเติม">
 				<table class="w-full text-left text-sm text-gray-600">
 						<thead class="bg-gray-50 text-xs font-medium text-gray-500 uppercase">
 							<tr>
@@ -167,11 +186,13 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md"
+		use:modal class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md"
 		onclick={(e) => { if (e.target === e.currentTarget) showModal = false; }}
 	>
 		<div class="my-auto w-full max-w-lg rounded-3xl glass-heavy p-5 shadow-2xl sm:p-8">
 			<h2 class="text-lg font-bold text-gray-800 mb-6">{editingId ? 'แก้ไขโฆษณา' : 'เพิ่มโฆษณา'}</h2>
+
+			{#if error}<p role="alert" class="mb-4 text-sm text-red-600">{error}</p>{/if}
 
 			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); saveAd(); }}>
 				<div>
@@ -196,17 +217,21 @@
 
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<div>
-						<label class="mb-1 block text-sm font-medium text-gray-700">ตำแหน่ง</label>
-						<select bind:value={formData.location} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
-							<option value="DASHBOARD">แดชบอร์ด</option>
-							<option value="SIDEBAR">แถบด้านข้าง</option>
+						<label for="ad-location" class="mb-1 block text-sm font-medium text-gray-700">ตำแหน่ง</label>
+						<select id="ad-location" bind:value={formData.location} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
+							{#each locations as location (location.value)}
+								<option value={location.value}>{location.label}</option>
+							{/each}
 						</select>
 					</div>
 					<div>
-						<label class="mb-1 block text-sm font-medium text-gray-700">หมวดหมู่สัตว์เลี้ยง *</label>
-						<select bind:value={formData.petCategoryId} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
+						<label for="ad-pet-category" class="mb-1 block text-sm font-medium text-gray-700">หมวดหมู่สัตว์เลี้ยง</label>
+						<select id="ad-pet-category" bind:value={formData.petCategoryId} class="w-full rounded-2xl border-2 border-transparent bg-white/60 px-4 py-3 text-sm outline-none transition-all focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100/50 hover:bg-white">
 							<option value="">ทุกประเภทสัตว์เลี้ยง</option>
-							{#each categories as category}
+							{#if formData.petCategoryId !== '' && !adCategories.some(category => category.id === Number(formData.petCategoryId))}
+                                <option value={formData.petCategoryId} disabled>กรุณาเลือกหมาหรือแมวใหม่</option>
+                            {/if}
+                            {#each adCategories as category (category.id)}
 								<option value={category.id}>{category.species}</option>
 							{/each}
 						</select>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 	import { getSession } from '$lib/api';
 
 	let {
@@ -16,6 +17,35 @@
 	} = $props();
 
 	let isAdmin = $state(false);
+	let desktop = $state(false);
+	let sidebar: HTMLElement;
+	onMount(() => {
+		const media = window.matchMedia('(min-width: 1024px)');
+		const resize = () => { desktop = media.matches; if (desktop) onClose?.(); };
+		resize();
+		media.addEventListener('change', resize);
+		return () => media.removeEventListener('change', resize);
+	});
+	$effect(() => {
+		if (!mobileOpen || desktop) return;
+		const previousFocus = document.activeElement as HTMLElement | null;
+		const overflow = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
+		sidebar?.querySelector<HTMLButtonElement>('[aria-label="ปิดเมนูด้านข้าง"]')?.focus();
+		return () => {
+			document.body.style.overflow = overflow;
+			previousFocus?.focus({ preventScroll: true });
+		};
+	});
+	function handleKeydown(event: KeyboardEvent) {
+		if (!mobileOpen || desktop) return;
+		if (event.key === 'Escape') { event.preventDefault(); onClose?.(); }
+		if (event.key !== 'Tab') return;
+		const links = Array.from(sidebar.querySelectorAll<HTMLElement>('a[href], button')).filter(el => el.getClientRects().length);
+		const first = links[0], last = links.at(-1);
+		if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+		else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+	}
 
 	$effect(() => {
 		if (browser) {
@@ -54,6 +84,8 @@
 	let expanded = $derived(!collapsed || mobileOpen);
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 {#if mobileOpen}
 	<button
 		class="fixed inset-0 z-30 bg-gray-900/40 backdrop-blur-sm lg:hidden"
@@ -63,22 +95,24 @@
 {/if}
 
 <aside
-	class="fixed left-0 top-0 z-40 flex h-dvh w-72 -translate-x-full flex-col border-r border-white/40 bg-white/95 shadow-[4px_0_24px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all duration-300 ease-in-out lg:translate-x-0 lg:bg-white/80 lg:shadow-[4px_0_24px_rgba(0,0,0,0.02)] {mobileOpen
+	bind:this={sidebar} inert={!desktop && !mobileOpen} aria-label="เมนูหลัก"
+	class="fixed left-0 top-0 z-40 flex h-dvh w-72 max-w-[calc(100vw-1rem)] flex-col border-r border-white/40 bg-white/95 shadow-[4px_0_24px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all duration-300 ease-in-out lg:translate-x-0 lg:bg-white/80 lg:shadow-[4px_0_24px_rgba(0,0,0,0.02)] {mobileOpen
 		? 'translate-x-0'
 		: '-translate-x-full'} {collapsed ? 'lg:w-20' : 'lg:w-64'}"
 >
 	<!-- Logo / Brand -->
-	<div class="flex h-16 items-center gap-3 border-b border-gray-100 px-4">
+	<div class="flex min-h-16 shrink-0 items-center gap-2 border-b border-gray-100 px-3">
 		<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 shadow-sm ring-1 ring-brand-100 transition-transform duration-300 hover:scale-105">
 			<img src="/hoanghoangmeow-logo.png" alt="HoangHoang Meow" class="h-10 w-10 object-contain" />
 		</div>
 		{#if expanded}
-			<span class="text-lg font-bold text-gray-800 whitespace-nowrap">HoangHoang <span class="text-brand-600">Meow</span></span>
+			<span class="text-base font-bold text-gray-800">HoangHoang <span class="text-brand-600">Meow</span></span>
 		{/if}
+		<button type="button" onclick={onClose} aria-label="ปิดเมนูด้านข้าง" class="ml-auto h-11 w-11 shrink-0 rounded-xl text-2xl text-gray-600 hover:bg-gray-100 lg:hidden">×</button>
 	</div>
 
 	<!-- Navigation -->
-	<nav class="flex-1 overflow-y-auto px-3 py-4">
+	<nav class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4">
 		<ul class="space-y-1">
 			{#each navItems as item}
 				<li>

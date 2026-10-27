@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dueReminders } from '$lib/notifications';
 	import { goto } from '$app/navigation';
 	import { getContext } from 'svelte';
 	import { getSession, logout } from '$lib/api';
@@ -18,9 +19,11 @@
 	} = $props();
 	let session = $state(getSession());
 	let isDropdownOpen = $state(false);
+	let hydrated = $state(false);
 	const toggleMobileMenu = getContext<() => void>('toggleMobileMenu');
 
 	onMount(() => {
+        hydrated = true;
 		const updateSession = () => { session = getSession(); };
 		window.addEventListener('session_updated', updateSession);
 		return () => window.removeEventListener('session_updated', updateSession);
@@ -43,8 +46,8 @@
 <header class="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-white/40 glass px-4 sm:px-6">
 	<div class="flex min-w-0 items-center gap-2 sm:gap-3">
 		<button
-			class="rounded-xl p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 lg:hidden"
-			aria-label="เปิดเมนู"
+			class="shrink-0 rounded-xl p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 lg:hidden"
+			disabled={!hydrated} aria-label="เปิดเมนู"
 			onclick={() => (onMenuToggle ?? toggleMobileMenu)?.()}
 		>
 			<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -62,7 +65,7 @@
 	</div>
 
 	<div class="flex shrink-0 items-center gap-1 sm:gap-4">
-		<a href="/reminders"
+		<a href="/reminders" aria-label="การแจ้งเตือนที่ถึงเวลา {$dueReminders.length} รายการ"
 			class="relative rounded-xl p-2 text-gray-500 transition-all duration-300 hover:bg-gray-100/50 hover:text-brand-600 hover:scale-105 block"
 		>
 			<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -72,26 +75,27 @@
 					d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
 				/>
 			</svg>
-			{#if activeReminders > 0}
+			{#if $dueReminders.length > 0}
 				<span
 					class="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 shadow-lg shadow-brand-500/40 text-[10px] font-bold text-white animate-pulse"
 				>
-					{activeReminders}
+					{$dueReminders.length}
 				</span>
 			{/if}
 		</a>
 
 		<div class="relative">
 			<button
+				aria-label="เมนูบัญชีผู้ใช้" aria-expanded={isDropdownOpen}
 				onclick={toggleDropdown}
 				class="flex items-center gap-3 rounded-lg p-2 sm:px-3 transition-all duration-300 hover:bg-white/60 hover:shadow-sm"
 			>
 				<div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700 shadow-inner">
 					{getUserInitial(session?.user.username || 'U')}
 				</div>
-				<div class="hidden sm:block text-left">
-					<p class="text-sm font-medium text-gray-700">{session?.user.username || 'ผู้ใช้'}</p>
-					<p class="text-xs text-gray-400">{session?.user.email || 'email@example.com'}</p>
+				<div class="hidden sm:block min-w-0 max-w-40 xl:max-w-64 text-left">
+					<p class="truncate text-sm font-medium text-gray-700">{session?.user.username || 'ผู้ใช้'}</p>
+					<p class="truncate text-xs text-gray-400">{session?.user.email || 'email@example.com'}</p>
 				</div>
 			</button>
 

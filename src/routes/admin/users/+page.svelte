@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { modal } from '$lib/actions/modal';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import TopNav from '$lib/components/TopNav.svelte';
@@ -95,7 +96,8 @@
 		{:else if userList.length === 0}
 			<p class="py-12 text-center text-sm text-gray-500">ไม่พบผู้ใช้</p>
 		{:else}
-			<div class="overflow-x-auto">
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users must be able to scroll this region.) -->
+			<div class="table-scroll" tabindex="0" role="region" aria-label="ตารางข้อมูล เลื่อนซ้ายขวาเพื่อดูเพิ่มเติม">
 				<table class="w-full text-left text-sm text-gray-600">
 					<thead class="bg-gray-50 text-xs font-medium text-gray-500 uppercase">
 						<tr>
@@ -156,7 +158,7 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md"
+		use:modal class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/40 p-4 backdrop-blur-md"
 		onclick={(e) => { if (e.target === e.currentTarget) showModal = false; }}
 	>
 		<div class="my-auto w-full max-w-md rounded-3xl glass-heavy p-5 shadow-2xl sm:p-8">
